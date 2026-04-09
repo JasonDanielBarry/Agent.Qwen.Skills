@@ -37,12 +37,7 @@ description: Save a lightweight session handoff note so the next session can pic
    - Use forward slashes in `repo_path` regardless of OS.
    - Include all 3 required sections with content. Each section must have at least one bullet point or a short note (e.g., "Nothing completed this session").
 
-5. **Add `.sessions/` to `.gitignore`** if it isn't already:
-   - Check if `.gitignore` exists at the workspace root.
-   - If it exists and doesn't already contain `.sessions/`, append it.
-   - If it doesn't exist, create it with `.sessions/` as content.
-
-6. **Confirm the save:**
+5. **Confirm the save:**
    - Show the user the file path.
    - Show a brief preview of what was saved.
    - Ask if adjustments are needed.

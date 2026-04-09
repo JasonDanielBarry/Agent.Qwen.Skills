@@ -6,7 +6,7 @@ This directory stores **Agent Skills** for Qwen Code — reusable, discoverable 
 
 Skills are invoked autonomously by the model when your prompt matches a Skill's `description`, or explicitly via `/skills <skill-name>`.
 
-**Location:** `D:\Users\jasonbarry\Documents\Development\Agent\Agents.Skills`
+**Location:** `D:\Users\jasonbarry\Documents\Development\Agent\Agent.Qwen.Skills`
 
 ## Purpose
 
@@ -55,7 +55,9 @@ For the canonical folder structure of a single Skill, see [Folder Structure](./A
 
 | Skill | Description |
 |---|---|
-| *(none yet)* | *Create your first Skill to get started* |
+| `aqs-endsession` | Save a lightweight session handoff note so the next session can pick up where this one left off |
+| `aqs-reattach` | Read the latest session handoff note and pick up where the previous session left off |
+| `aqs-git-commit-and-push` | Commit all changes using conventional commit messages and push to remote |
 
 ## Management
 
@@ -71,7 +73,8 @@ For detailed management and troubleshooting, see the [Qwen Code Implementation N
 
 ## Conventions
 
-- Use **kebab-case** for Skill folder names (e.g., `pdf-extraction`, `code-review`)
+- Use **kebab-case** for Skill folder names (e.g., `aqs-pdf-extraction`, `aqs-code-review`)
+- All Skills must use the `aqs-` prefix to avoid naming conflicts with other sources
 - Every Skill requires a `SKILL.md` with valid YAML frontmatter (`name` + `description`)
 - Keep Skills modular, self-contained, and focused on one capability
 - Avoid hardcoding paths, secrets, or environment-specific values
@@ -88,7 +91,7 @@ For detailed management and troubleshooting, see the [Qwen Code Implementation N
 - Skills are invoked by the agent, not executed independently
 - Skills can reference external tools via MCP or other integration methods
 - Keep Skill definitions concise to conserve context window tokens
-- For security guidelines, limitations, and multi-Skill behavior, see the [Agent Skills Research guide](./Agent%20Skills%20Research.md)
+- For security guidelines, limitations, and multi-Skill behavior, see the [Agent Skills Guide](./Agent%20Skills%20Guide.md)
 
 ---
 

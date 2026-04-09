@@ -45,13 +45,13 @@ This ensures clear scoping and prevents collisions when multiple Skill sources a
 
 ## Getting Started
 
-1. Read the [Agent Skills Research guide](./Agent%20Skills%20Research.md) for universal concepts and best practices
+1. Read the [Agent Skills Guide](./Agent%20Skills%20Guide.md) for universal concepts and best practices
 2. Read the [Qwen Code Implementation Notes](./Qwen%20Code%20Implementation%20Notes.md) for Qwen-specific details (paths, format, commands, model token budgets)
 3. Create a new folder using the `aqs-` prefix and kebab-case naming (e.g., `aqs-pdf-tool`)
 4. Write a `SKILL.md` with YAML frontmatter and clear, step-by-step instructions
 5. Restart Qwen Code and test that the Skill activates on relevant prompts
 
-For a quick validation checklist, see the [Quick-Start Checklist](./Agent%20Skills%20Research.md#quick-start-checklist) and [Testing Methodology](./Agent%20Skills%20Research.md#testing-methodology) in the research guide.
+For a quick validation checklist, see the [Quick-Start Checklist](./Agent%20Skills%20Guide.md#quick-start-checklist) and [Testing Methodology](./Agent%20Skills%20Guide.md#testing-methodology) in the research guide.
 
 ## Installation
 
@@ -91,6 +91,7 @@ xcopy /E /I /Y skills\aqs-endsession "%USERPROFILE%\.qwen\skills\aqs-endsession"
 |---|---|
 | `aqs-endsession` | Save a session handoff note when wrapping up work |
 | `aqs-reattach` | Read the latest session handoff note and resume work |
+| `aqs-git-commit-and-push` | Commit all changes using conventional commit messages and push to remote |
 
 ## Management
 
