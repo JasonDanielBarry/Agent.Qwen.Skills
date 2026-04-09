@@ -31,11 +31,23 @@ Agents.Skills/
 └── Qwen Code Implementation Notes.md  ← Qwen Code-specific details
 ```
 
+## Naming Convention
+
+To avoid naming conflicts with Skills from other sources (personal, project-level, or third-party), all Skills in this repository must use the `aqs-` prefix:
+
+```
+aqs-<skill-name>
+```
+
+Examples: `aqs-pdf-tool`, `aqs-code-review`, `aqs-data-migration`
+
+This ensures clear scoping and prevents collisions when multiple Skill sources are active simultaneously.
+
 ## Getting Started
 
 1. Read the [Agent Skills Research guide](./Agent%20Skills%20Research.md) for universal concepts and best practices
 2. Read the [Qwen Code Implementation Notes](./Qwen%20Code%20Implementation%20Notes.md) for Qwen-specific details (paths, format, commands, model token budgets)
-3. Create a new folder for your Skill using lowercase letters and hyphens
+3. Create a new folder using the `aqs-` prefix and kebab-case naming (e.g., `aqs-pdf-tool`)
 4. Write a `SKILL.md` with YAML frontmatter and clear, step-by-step instructions
 5. Restart Qwen Code and test that the Skill activates on relevant prompts
 
