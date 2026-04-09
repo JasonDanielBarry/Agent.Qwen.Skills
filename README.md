@@ -53,11 +53,44 @@ This ensures clear scoping and prevents collisions when multiple Skill sources a
 
 For a quick validation checklist, see the [Quick-Start Checklist](./Agent%20Skills%20Research.md#quick-start-checklist) and [Testing Methodology](./Agent%20Skills%20Research.md#testing-methodology) in the research guide.
 
+## Installation
+
+Skills in this repo are **Personal Skills** — installed to `~/.qwen/skills/` for cross-project use.
+
+### Install / Reinstall All Skills
+
+Run the install script from the repo root:
+
+**Windows (CMD):**
+```cmd
+install-skills.bat
+```
+
+**Windows (PowerShell):**
+```powershell
+.\install-skills.ps1
+```
+
+The script will:
+1. Create `~/.qwen/skills/` if it doesn't exist
+2. Copy all skills from `skills/` to `~/.qwen/skills/`
+3. Replace any existing versions with the latest from this repo
+
+> **Remember:** Restart Qwen Code after installing for changes to take effect.
+
+### Manual Install
+
+Copy a skill folder manually:
+```cmd
+xcopy /E /I /Y skills\aqs-endsession "%USERPROFILE%\.qwen\skills\aqs-endsession"
+```
+
 ## Available Skills
 
 | Skill | Description |
 |---|---|
-| *(none yet)* | *Create your first Skill to get started* |
+| `aqs-endsession` | Save a session handoff note when wrapping up work |
+| `aqs-reattach` | Read the latest session handoff note and resume work |
 
 ## Management
 
