@@ -21,7 +21,7 @@ This directory serves as an **Extension** source for Skills. It is a workspace f
 
 | Document | Purpose |
 |---|---|
-| [Agent Skills Research.md](./Agent%20Skills%20Research.md) | **Agent-agnostic** concepts: what Skills are, design principles, best practices, security, versioning |
+| [Agent Skills Guide.md](./Agent%20Skills%20Guide.md) | **Agent-agnostic** concepts: what Skills are, design principles, best practices, security, versioning |
 | [Qwen Code Implementation Notes.md](./Qwen%20Code%20Implementation%20Notes.md) | **Qwen Code-specific** details: discovery paths, `SKILL.md` format, commands, debugging, gotchas |
 
 ## Structure
@@ -36,15 +36,15 @@ Agents.Skills/
 │   └── templates/         ← Optional: starter templates
 ├── README.md              ← Project overview
 ├── QWEN.md                ← This file — agent context for this directory
-├── Agent Skills Research.md  ← Agent-agnostic research guide
+├── Agent Skills Guide.md  ← Agent-agnostic research guide
 └── Qwen Code Implementation Notes.md  ← Qwen Code-specific details
 ```
 
-For the canonical folder structure of a single Skill, see [Folder Structure](./Agent%20Skills%20Research.md#folder-structure) in the research guide.
+For the canonical folder structure of a single Skill, see [Folder Structure](./Agent%20Skills%20Guide.md#folder-structure) in the research guide.
 
 ## Getting Started
 
-1. Read the [Agent Skills Research guide](./Agent%20Skills%20Research.md) for universal concepts and best practices
+1. Read the [Agent Skills Guide](./Agent%20Skills%20Guide.md) for universal concepts and best practices
 2. Read the [Qwen Code Implementation Notes](./Qwen%20Code%20Implementation%20Notes.md) for Qwen-specific details (paths, format, commands)
 3. Create a new folder for your Skill using lowercase letters and hyphens
 4. Write a `SKILL.md` with YAML frontmatter and clear, step-by-step instructions

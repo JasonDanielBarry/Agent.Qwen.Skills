@@ -1,6 +1,6 @@
 # Qwen Code — Agent Skills Implementation Notes
 
-Qwen Code-specific details for creating, managing, and debugging Agent Skills. Read [Agent Skills Research.md](./Agent%20Skills%20Research.md) first for agent-agnostic concepts, design principles, and best practices.
+Qwen Code-specific details for creating, managing, and debugging Agent Skills. Read [Agent Skills Guide.md](./Agent%20Skills%20Guide.md) first for agent-agnostic concepts, design principles, and best practices.
 
 ---
 
@@ -370,7 +370,7 @@ The Skills Panel (opened via `/skills`) may not be available in all Qwen Code de
 
 - [**Qwen Code Docs — Agent Skills**](https://qwenlm.github.io/qwen-code-docs/en/users/features/skills/) — Official Qwen Code Skills documentation
 - [**Qwen Code Docs — Getting Started with Extensions**](https://qwenlm.github.io/qwen-code-docs/en/developers/extensions/getting-started-extensions/) — How to build extensions that bundle Skills
-- [Agent Skills Research.md](./Agent%20Skills%20Research.md) — Agent-agnostic concepts, best practices, testing methodology, CLI-First design, and error handling patterns
+- [Agent Skills Guide.md](./Agent%20Skills%20Guide.md) — Agent-agnostic concepts, best practices, testing methodology, CLI-First design, and error handling patterns
 
 ---
 

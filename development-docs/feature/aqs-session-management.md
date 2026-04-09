@@ -251,5 +251,5 @@ Full stress test plan: [aqs-session-management-stress-test.md](./aqs-session-man
 
 ## 7. Related Documentation
 
-- [Agent Skills Research.md](../Agent%20Skills%20Research.md) — Agent-agnostic Skill design principles
+- [Agent Skills Guide.md](../Agent%20Skills%20Guide.md) — Agent-agnostic Skill design principles
 - [Qwen Code Implementation Notes.md](../Qwen%20Code%20Implementation%20Notes.md) — Qwen-specific Skill format and discovery

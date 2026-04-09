@@ -10,7 +10,7 @@ This directory contains custom Skills — modular capabilities that extend Qwen 
 
 | Document | Scope | Covers |
 |---|---|---|
-| [Agent Skills Research.md](./Agent%20Skills%20Research.md) | **Agent-agnostic** | What Skills are, design principles, best practices, security, token budget, versioning, lifecycle, testing methodology, distribution, agent design patterns |
+| [Agent Skills Guide.md](./Agent%20Skills%20Guide.md) | **Agent-agnostic** | What Skills are, design principles, best practices, security, token budget, versioning, lifecycle, testing methodology, distribution, agent design patterns |
 | [Qwen Code Implementation Notes.md](./Qwen%20Code%20Implementation%20Notes.md) | **Qwen Code-specific** | Discovery paths, `SKILL.md` format, complete example, invocation commands, token budget by model, extension Skills, git workflow, debugging, edge cases |
 
 Read the research guide first for universal concepts, then the implementation notes for Qwen Code specifics.
@@ -27,7 +27,7 @@ Agents.Skills/
 │   └── templates/         ← Optional: starter templates
 ├── README.md              ← This file
 ├── QWEN.md                ← Agent context for this directory
-├── Agent Skills Research.md  ← Agent-agnostic research guide
+├── Agent Skills Guide.md  ← Agent-agnostic research guide
 └── Qwen Code Implementation Notes.md  ← Qwen Code-specific details
 ```
 
