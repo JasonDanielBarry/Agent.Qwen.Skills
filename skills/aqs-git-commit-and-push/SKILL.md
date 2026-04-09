@@ -33,7 +33,6 @@ When invoked, this skill stages all changes, creates one or more conventional co
    - Follow Conventional Commits format: `type(scope): description`
    - Body should explain *why*, not *what*
    - Match the style of recent commits (from `git log -n 3`)
-   - Draft a proposed message and present it to the user before committing
 
 5. **Commit:**
    - Run `git commit -m "message"` (or multiple commits for separate logical groups)
@@ -67,7 +66,7 @@ When invoked, this skill stages all changes, creates one or more conventional co
 ## Examples
 
 User: "commit and push"
-→ Stage all, review changes, propose commit message(s), commit, push
+→ Stage all, review changes, commit, push
 
 User: "/git-commit-and-push"
-→ Stage all, review changes, propose commit message(s), commit, push
+→ Stage all, review changes, commit, push
