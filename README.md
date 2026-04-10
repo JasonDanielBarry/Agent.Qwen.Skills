@@ -93,6 +93,7 @@ xcopy /E /I /Y skills\aqs-endsession "%USERPROFILE%\.qwen\skills\aqs-endsession"
 | `aqs-reattach` | Read the latest session handoff note and restore context — surfaces accomplishments, stopping point, and next tasks; auto-creates a todo list |
 | `aqs-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — handles upstream setup, merge conflict warnings, and edge cases without asking permission |
 | `aqs-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, and offers post-merge actions |
+| `aqs-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification-first retrieval, conflict resolution, and lifecycle management |
 
 ## Management
 
