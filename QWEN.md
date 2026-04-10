@@ -59,6 +59,7 @@ For the canonical folder structure of a single Skill, see [Folder Structure](./A
 | `aqs-reattach` | Read the latest session handoff note and restore context — auto-creates todo list from next steps |
 | `aqs-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — no permission prompts |
 | `aqs-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, offers post-merge actions |
+| `aqs-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification and conflict resolution |
 
 ## Management
 
