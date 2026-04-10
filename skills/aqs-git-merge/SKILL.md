@@ -7,9 +7,9 @@ description: Merge branches interactively with guided conflict resolution. Use w
 
 ## Skill Goal
 
-This skill provides a guided, safe workflow for merging branches. It verifies the repository state, presents available target branches, lets the user choose where to merge the current branch, executes the merge, and — if conflicts arise — presents options without auto-resolving. The user remains in control at every decision point.
+This skill provides a guided, safe workflow for merging branches. It verifies the repository state, presents available target branches, lets the user choose where to merge the current branch, executes the merge, and — if conflicts arise — presents options without auto-resolving. The user remains in control at every decision point. After a successful merge, the skill offers post-merge actions (push, branch cleanup, undo).
 
-The core direction is: **merge the current branch INTO the target branch**.
+The core direction is: **merge the current branch (source) INTO the target branch**.
 
 ## Instructions
 
@@ -19,6 +19,11 @@ Determine if the current working directory is inside a git repository:
 
 - Run `git rev-parse --show-toplevel`.
 - If this fails, inform the user that git operations are not supported in the current directory and exit.
+
+### Step 1.5: Fetch Latest State
+
+- Run `git fetch --prune` to ensure remote tracking branches are up to date and stale refs are removed.
+- If there is no remote, skip silently.
 
 ### Step 2: Pre-Merge State Check
 
@@ -49,8 +54,9 @@ Determine if the current working directory is inside a git repository:
 
 ### Step 4: Discover Target Branches
 
-- Run `git branch` to list local branches (exclude current branch with `--list` minus `*`).
-- Optionally include remote branches with `git branch -r`.
+- Run `git branch --list --format='%(refname:short)'` to get clean branch names without the `*` prefix.
+- Filter out the current branch from the list.
+- Optionally include remote branches with `git branch -r --list --format='%(refname:short)'`.
 - Present as a numbered list, excluding the current branch.
 
   ```
@@ -74,14 +80,17 @@ Determine if the current working directory is inside a git repository:
 **Direct invocation:** If the user invoked the skill with explicit branch names (e.g., `/aqs-git-merge feature/x -> develop`):
 - Validate that both branches exist.
 - The `<from-branch>` is `feature/x`, the `<into-branch>` is `develop`.
-- If the current branch is not `<from-branch>`, warn the user and ask if they want to switch.
-- Skip to Step 6 with the specified branches.
+- If the current branch is the `<into-branch>`, skip to Step 6 with the source branch already known.
+- If the current branch is `<from-branch>`, proceed to Step 6.
+- If the current branch is neither, warn the user and ask if they want to switch to the `<into-branch>` first.
 
 ### Step 6: Switch to Target Branch
 
 Before the merge can happen, switch to the target branch:
 
-- Run `git checkout <target-branch>`.
+- If the target branch is a remote tracking branch (e.g., `origin/develop`), first run `git fetch` to ensure it's up to date.
+- Confirm the switch with the user: `Switching to <target-branch> to merge <source-branch> into it. Proceed?`
+- Upon confirmation, run `git checkout <target-branch>`.
 - If checkout fails (e.g., dirty tree), report the error and offer to stash/commit first.
 - After checkout, verify: `git branch --show-current` should now show `<target-branch>`.
 
@@ -94,7 +103,7 @@ Present the user with merge strategy options:
 | **Fast-forward (default)** | *(none)* | If possible, move HEAD forward without a merge commit |
 | **No fast-forward** | `--no-ff` | Always create a merge commit |
 | **Fast-forward only** | `--ff-only` | Fail if fast-forward is not possible |
-| **Squash** | `--squash` | Combine all changes into a single commit, no merge commit |
+| **Squash** | `--squash` | Combine all changes into staged changes; the user must commit manually |
 
 Additionally, offer a **dry-run preview**:
 - `git merge --no-commit --no-ff <source-branch>` — shows what the merge would look like without committing.
@@ -104,7 +113,8 @@ Ask the user which strategy they prefer. If they don't specify, use the default 
 ### Step 8: Execute Merge
 
 - Run `git merge <strategy-flags> <source-branch>`.
-- **Clean merge:** Report success, show the merge commit message, and proceed to Step 10 (Post-Merge).
+- **Clean merge (non-squash):** Report success, show the merge commit message, and proceed to Step 10 (Post-Merge).
+- **Squash merge:** Changes are staged but not committed. Help the user craft a commit message (default: `Merge branch '<source-branch>' into <target-branch>`), then run `git commit -m "<message>"`. Proceed to Step 10.
 - **Already up to date:** Report "Already up to date." and exit.
 - **Conflicts:** Proceed to Step 9.
 
@@ -122,8 +132,8 @@ Ask the user which strategy they prefer. If they don't specify, use the default 
    | **Abort merge** | `git merge --abort` | Cancel and restore pre-merge state (back to before the merge attempt) |
    | **Inspect conflicts** | `git diff --name-only --diff-filter=U` + show files | Display conflict markers in affected files |
    | **Resolve manually** | — | Guide the user through manual resolution, then `git add <file>` and `git merge --continue` |
-   | **Accept incoming (theirs)** | `git checkout --theirs <file>` for all conflicted files | Accept the source branch's version for all conflicts |
-   | **Accept current (ours)** | `git checkout --ours <file>` for all conflicted files | Keep the target branch's version for all conflicts |
+   | **Accept source branch version** | `git checkout --theirs <file>` for all conflicted files | Accept the source branch's (incoming) version for all conflicts |
+   | **Accept target branch version** | `git checkout --ours <file>` for all conflicted files | Keep the target branch's (current) version for all conflicts |
 
 3. Wait for the user's decision. If they choose to resolve manually:
    - Show each conflicted file's content with conflict markers.
@@ -143,7 +153,13 @@ Ask the user which strategy they prefer. If they don't specify, use the default 
 3. **Offer to switch back to the original branch:**
    - Ask if the user wants to return to the branch they started on (`git checkout <original-branch>`).
 
-4. **Offer undo guidance:**
+4. **Offer to delete the source branch (optional):**
+   - If the user no longer needs the source branch, offer:
+     - `git branch -d <source-branch>` — safe delete (only if fully merged)
+     - `git push origin --delete <source-branch>` — delete remote branch too
+   - Only proceed with explicit confirmation.
+
+5. **Offer undo guidance:**
    - If the user expresses regret or the merge was mistaken, inform them of:
      - `git reset --hard ORIG_HEAD` — undo the merge commit (with warning about lost work)
 
@@ -151,13 +167,14 @@ Ask the user which strategy they prefer. If they don't specify, use the default 
 
 | Scenario | Handling |
 |---|---|
-| No remote configured | Skip remote branch listing in Step 4 |
+| No remote configured | Skip remote branch listing in Step 4; skip fetch in Step 1.5 |
 | Already up to date | Report "Already up to date." and exit |
 | Detached HEAD | Warn user; recommend checking out a branch first |
 | Shallow clone | Warn that merge may require full history (`git fetch --unshallow`) |
 | Untracked files in working tree | Include in dirty-tree warning; offer to add to `.gitignore` |
 | Cross-repo subdirectory | Use `git rev-parse --show-toplevel` to operate from repo root |
-| Target branch is ahead of remote | Warn user that pushing after merge may require a force push (if they've rewritten history) |
+| Target branch is ahead of remote | Warn user that pushing after merge may require a force push (if history was rewritten) |
+| No branches available to merge into | If only one branch exists, inform user there's nowhere to merge to |
 
 ## Examples
 
@@ -190,8 +207,8 @@ Options:
   1. Abort merge (restore pre-merge state)
   2. Inspect conflict files
   3. Resolve manually
-  4. Accept incoming (theirs) for all conflicts
-  5. Accept current (ours) for all conflicts
+  4. Accept source branch version (fix/urgent-hotfix) for all conflicts
+  5. Accept target branch version (develop) for all conflicts
 
 How would you like to proceed?
 ```

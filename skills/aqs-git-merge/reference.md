@@ -59,9 +59,9 @@ def authenticate(user, pwd):
 >>>>>>> feature/auth-refactor
 ```
 
-- `<<<<<<< HEAD` — start of the current branch's version
+- `<<<<<<< HEAD` — start of the target branch's version (the branch you checked out to merge into)
 - `=======` — separator
-- `>>>>>>> feature/auth-refactor` — end of the incoming branch's version
+- `>>>>>>> feature/auth-refactor` — end of the source branch's version (the branch being merged in)
 
 ### Manual Resolution Steps
 
@@ -78,12 +78,12 @@ def authenticate(user, pwd):
 If you want to accept one side for *all* conflicted files at once:
 
 ```bash
-# Accept the incoming branch's version for all conflicts
+# Accept the source branch's version for all conflicts (incoming)
 git checkout --theirs -- <path>
 git add -A
 git merge --continue
 
-# Accept the current branch's version for all conflicts
+# Accept the target branch's version for all conflicts (current)
 git checkout --ours -- <path>
 git add -A
 git merge --continue
