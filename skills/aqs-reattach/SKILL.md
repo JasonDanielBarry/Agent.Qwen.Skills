@@ -3,6 +3,10 @@ name: aqs-reattach
 description: Read the latest session handoff note and pick up where the previous session left off. Use when resuming work, continuing a session, restoring context, or asking what you were working on.
 ---
 
+## Skill Goal
+
+This skill restores working context instantly when resuming a Qwen Code session by reading the most recent handoff note created by `aqs-endsession`. It surfaces what was accomplished, where work stopped, and what comes next — so the agent can pick up immediately without requiring the user to re-explain the situation or re-trace prior steps.
+
 ## Instructions
 
 1. **Determine the workspace root:**

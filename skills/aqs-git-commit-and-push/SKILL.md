@@ -5,6 +5,10 @@ description: Commit all changes using conventional commit messages and push to r
 
 # Git Commit and Push
 
+## Skill Goal
+
+This skill streamlines the process of saving and sharing work by automating git staging, conventional commit creation, and remote pushing in a single step. It ensures commits follow project conventions, handles edge cases cleanly, and keeps the working tree in a predictable state — reducing friction when users want to persist their changes.
+
 ## Instructions
 
 When invoked, this skill stages all changes, creates one or more conventional commits, and pushes to the remote repository. The working tree should be clean afterward.
