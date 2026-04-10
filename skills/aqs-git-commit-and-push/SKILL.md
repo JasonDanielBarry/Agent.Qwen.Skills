@@ -7,7 +7,7 @@ description: Commit all changes using conventional commit messages and push to r
 
 ## Skill Goal
 
-This skill streamlines the process of saving and sharing work by automating git staging, conventional commit creation, and remote pushing in a single step. It ensures commits follow project conventions, handles edge cases cleanly, and keeps the working tree in a predictable state — reducing friction when users want to persist their changes.
+This skill streamlines the process of saving and sharing work by autonomously staging, committing, and pushing without asking for user permission. The user invoking the skill has already given implicit consent by requesting the action. It ensures commits follow project conventions, handles edge cases cleanly, and keeps the working tree in a predictable state — reducing friction when users want to persist their changes.
 
 ## Instructions
 
@@ -19,6 +19,7 @@ When invoked, this skill stages all changes, creates one or more conventional co
    - Run `git status` to see what has changed
    - Run `git diff HEAD` to review the full diff of all changes
    - Run `git log -n 3 --oneline` to review recent commit message style
+   - Check for in-progress operations: if `git status` mentions a merge, rebase, cherry-pick, or conflict in progress, display a warning but proceed with staging and committing.
 
 2. **Stage all changes:**
    - Run `git add -A` to stage everything (new, modified, deleted)
@@ -37,14 +38,15 @@ When invoked, this skill stages all changes, creates one or more conventional co
    - Follow Conventional Commits format: `type(scope): description`
    - Body should explain *why*, not *what*
    - Match the style of recent commits (from `git log -n 3`)
+   - **Do not ask the user for permission or confirmation.** Commit directly with your drafted message.
 
 5. **Commit:**
    - Run `git commit -m "message"` (or multiple commits for separate logical groups)
    - Verify with `git status` that the working tree is clean
 
 6. **Push:**
-   - Run `git push`
-   - Report the result
+   - Run `git push`. If this fails with "no upstream branch", run `git push --set-upstream origin <branch-name>` instead.
+   - Report the result, including the remote URL if a new branch was created.
 
 ### Edge Cases
 
@@ -70,7 +72,10 @@ When invoked, this skill stages all changes, creates one or more conventional co
 ## Examples
 
 User: "commit and push"
-→ Stage all, review changes, commit, push
+→ Review status and diff, stage all, write commit message, commit, push
 
 User: "/git-commit-and-push"
-→ Stage all, review changes, commit, push
+→ Same flow as above
+
+User: "commit and push" (new branch with no upstream)
+→ Same flow, but `git push` fails with "no upstream branch", so run `git push --set-upstream origin <branch>` and report success

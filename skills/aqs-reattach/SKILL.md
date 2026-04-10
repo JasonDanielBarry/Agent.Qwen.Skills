@@ -13,21 +13,21 @@ This skill restores working context instantly when resuming a Qwen Code session 
    - If the current directory contains `.git` (or has one in a parent), use that directory as the workspace root.
    - Otherwise, use the current directory as the workspace root.
 
-2. **Scope by repo:**
+2. **Handle missing reports (early exit):**
+   - If `.sessions/` doesn't exist: "No `.sessions/` directory found. Run aqs-endsession first to save your session state."
+   - If `.sessions/` exists but contains no `session-*.md` files: "`.sessions/` exists but no session reports found. Run aqs-endsession first to save your session state."
+
+3. **Scope by repo:**
    - Compare the current working directory against `repo_path` values in `.sessions/` file frontmatter.
    - Normalize both paths to forward slashes.
-   - Filter to files whose `repo_path` matches the current directory or a parent of it.
-   - If no match is found, fall back to scanning all files and display a warning: "No session reports found for this workspace. Showing the most recent report from another workspace."
+   - Filter to files whose `repo_path` matches the current directory **or a parent of it** (i.e., the current directory is the same as, or a subdirectory of, `repo_path`).
+   - If no match is found, fall back to scanning all files in `.sessions/`. Pick the most recent file using the same timestamp/mtime logic from step 4, and display a warning: "No session reports found for this workspace. Showing the most recent report from another workspace."
 
-3. **Find the most recent `session-*.md` file in `.sessions/`** (filtered per step 2):
+4. **Find the most recent `session-*.md` file in `.sessions/`** (filtered per step 3):
    - Parse each filename for its timestamp (`session-YYYYMMDD-HHmmss.md`).
    - For files where the timestamp parses, compare by timestamp.
    - For files where it doesn't parse, fall back to file modification time.
    - Pick the overall most recent file by whichever method applies.
-
-4. **Handle missing reports:**
-   - If `.sessions/` doesn't exist: "No `.sessions/` directory found. Run aqs-endsession first to save your session state."
-   - If `.sessions/` exists but contains no `session-*.md` files: "`.sessions/` exists but no session reports found. Run aqs-endsession first to save your session state."
 
 5. **Read and validate the file:**
    - If the file is empty or has invalid YAML frontmatter, skip it and try the next most recent file.
@@ -44,8 +44,7 @@ This skill restores working context instantly when resuming a Qwen Code session 
 
 7. **Validate the repo path:**
    - Compare `repo_path` from frontmatter with the current working directory (normalize both to forward slashes).
-   - **Match or subdirectory**: proceed with a note: "Note: Current directory is a subdirectory of the session's repo. Session context applies to the parent repo."
-   - **Mismatch**: warn the user and ask if they want to proceed anyway.
+   - **Mismatch** (current directory is neither `repo_path` nor a subdirectory): warn the user and ask if they want to proceed anyway. This indicates the report belongs to a different workspace entirely.
 
 8. **Check session age:**
    - Normalize `session_date` to UTC before comparing.
@@ -59,9 +58,9 @@ This skill restores working context instantly when resuming a Qwen Code session 
    - Where to pick up next
 
 10. **Adopt the "Where to Pick Up Next" section as the active task list:**
-    - If a todo list already exists, merge the "Where to Pick Up Next" items into it (deduplicating by content).
+    - If a todo list already exists, merge the "Where to Pick Up Next" items into it. Deduplicate by **exact string match** (case-insensitive, trimmed whitespace).
     - If no todo list exists, create one from the section's bullet points.
-    - If the section is empty, contains only non-actionable content (e.g., "Nothing specific," "TBD"), or is missing, skip todo list creation and ask the user what they'd like to work on.
+    - If the section is empty, contains only non-actionable content (e.g., the placeholders from `aqs-endsession` such as "Nothing to pick up — no further action needed.", "Nothing specific," "TBD"), or is missing, skip todo list creation and ask the user what they'd like to work on.
 
 11. **Confirm readiness:**
     - Briefly state that context is loaded and you're ready to continue.
