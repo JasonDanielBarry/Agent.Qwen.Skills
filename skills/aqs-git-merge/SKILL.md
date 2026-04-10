@@ -7,7 +7,9 @@ description: Merge branches interactively with guided conflict resolution. Use w
 
 ## Skill Goal
 
-This skill provides a guided, safe workflow for merging branches. It verifies the repository state, presents available merge targets, lets the user choose a branch and merge strategy, executes the merge, and — if conflicts arise — presents options without auto-resolving. The user remains in control at every decision point.
+This skill provides a guided, safe workflow for merging branches. It verifies the repository state, presents available target branches, lets the user choose where to merge the current branch, executes the merge, and — if conflicts arise — presents options without auto-resolving. The user remains in control at every decision point.
+
+The core direction is: **merge the current branch INTO the target branch**.
 
 ## Instructions
 
@@ -43,42 +45,47 @@ Determine if the current working directory is inside a git repository:
 ### Step 3: Branch Context
 
 - Run `git branch --show-current` and report the current branch to the user.
-- This is the **into-branch** (the branch that will receive changes).
+- This is the **source branch** (the branch whose changes will be merged into the target).
 
-### Step 4: Discover Merge Targets
+### Step 4: Discover Target Branches
 
-1. **Local branches not yet merged:**
-   - Run `git branch --no-merged HEAD` to find local branches with unmerged commits.
-   - If no such branches exist, report "No unmerged local branches available."
+- Run `git branch` to list local branches (exclude current branch with `--list` minus `*`).
+- Optionally include remote branches with `git branch -r`.
+- Present as a numbered list, excluding the current branch.
 
-2. **Remote tracking branches:**
-   - Run `git branch -r --no-merged HEAD` to find remote branches.
-   - Group results by local and remote in the display.
+  ```
+  Target branches (merge current branch into one of these):
 
-3. **Present as a numbered list**, e.g.:
+  Local branches:
+  1. develop
+  2. main
+  3. release/v2.0
 
-   ```
-   Local branches:
-   1. feature/user-auth
-   2. fix/login-bug
-   3. refactor/api-cleanup
-
-   Remote branches:
-   4. origin/develop
-   5. origin/main
-   ```
+  Remote branches:
+  4. origin/develop
+  5. origin/main
+  ```
 
 ### Step 5: User Selection
 
-- Wait for the user to pick a branch from the list.
-- Confirm the merge direction: `Merging <from-branch> into <current-branch>`.
+- Wait for the user to pick a target branch from the list.
+- Confirm the merge direction: `Merging <current-branch> into <target-branch>`.
 
 **Direct invocation:** If the user invoked the skill with explicit branch names (e.g., `/aqs-git-merge feature/x -> develop`):
 - Validate that both branches exist.
-- If the `<into-branch>` is not the current branch, ask the user if they want to switch to it first (`git checkout <into-branch>`).
-- Skip to Step 6 with the specified `<from-branch>`.
+- The `<from-branch>` is `feature/x`, the `<into-branch>` is `develop`.
+- If the current branch is not `<from-branch>`, warn the user and ask if they want to switch.
+- Skip to Step 6 with the specified branches.
 
-### Step 6: Merge Strategy Selection
+### Step 6: Switch to Target Branch
+
+Before the merge can happen, switch to the target branch:
+
+- Run `git checkout <target-branch>`.
+- If checkout fails (e.g., dirty tree), report the error and offer to stash/commit first.
+- After checkout, verify: `git branch --show-current` should now show `<target-branch>`.
+
+### Step 7: Merge Strategy Selection
 
 Present the user with merge strategy options:
 
@@ -90,18 +97,18 @@ Present the user with merge strategy options:
 | **Squash** | `--squash` | Combine all changes into a single commit, no merge commit |
 
 Additionally, offer a **dry-run preview**:
-- `git merge --no-commit --no-ff <branch>` — shows what the merge would look like without committing.
+- `git merge --no-commit --no-ff <source-branch>` — shows what the merge would look like without committing.
 
 Ask the user which strategy they prefer. If they don't specify, use the default (fast-forward if possible).
 
-### Step 7: Execute Merge
+### Step 8: Execute Merge
 
-- Run `git merge <strategy-flags> <from-branch>`.
-- **Clean merge:** Report success, show the merge commit message, and proceed to Step 9 (Post-Merge).
+- Run `git merge <strategy-flags> <source-branch>`.
+- **Clean merge:** Report success, show the merge commit message, and proceed to Step 10 (Post-Merge).
 - **Already up to date:** Report "Already up to date." and exit.
-- **Conflicts:** Proceed to Step 8.
+- **Conflicts:** Proceed to Step 9.
 
-### Step 8: Conflict Handling
+### Step 9: Conflict Handling
 
 **Do NOT auto-resolve conflicts.**
 
@@ -112,18 +119,18 @@ Ask the user which strategy they prefer. If they don't specify, use the default 
 
    | Option | Command | Effect |
    |---|---|---|
-   | **Abort merge** | `git merge --abort` | Cancel and restore pre-merge state |
+   | **Abort merge** | `git merge --abort` | Cancel and restore pre-merge state (back to before the merge attempt) |
    | **Inspect conflicts** | `git diff --name-only --diff-filter=U` + show files | Display conflict markers in affected files |
    | **Resolve manually** | — | Guide the user through manual resolution, then `git add <file>` and `git merge --continue` |
-   | **Accept incoming (theirs)** | `git checkout --theirs <file>` for all conflicted files | Accept the merged-in branch's version for all conflicts |
-   | **Accept current (ours)** | `git checkout --ours <file>` for all conflicted files | Keep the current branch's version for all conflicts |
+   | **Accept incoming (theirs)** | `git checkout --theirs <file>` for all conflicted files | Accept the source branch's version for all conflicts |
+   | **Accept current (ours)** | `git checkout --ours <file>` for all conflicted files | Keep the target branch's version for all conflicts |
 
 3. Wait for the user's decision. If they choose to resolve manually:
    - Show each conflicted file's content with conflict markers.
    - Guide them through editing and marking resolved with `git add <file>`.
    - Once all resolved, run `git merge --continue`.
 
-### Step 9: Post-Merge
+### Step 10: Post-Merge
 
 1. Report final state:
    - `git status`
@@ -133,7 +140,10 @@ Ask the user which strategy they prefer. If they don't specify, use the default 
    - Ask the user if they want to push the result.
    - If yes, run `git push`. If there's no upstream, run `git push --set-upstream origin <branch>`.
 
-3. **Offer undo guidance:**
+3. **Offer to switch back to the original branch:**
+   - Ask if the user wants to return to the branch they started on (`git checkout <original-branch>`).
+
+4. **Offer undo guidance:**
    - If the user expresses regret or the merge was mistaken, inform them of:
      - `git reset --hard ORIG_HEAD` — undo the merge commit (with warning about lost work)
 
@@ -147,18 +157,20 @@ Ask the user which strategy they prefer. If they don't specify, use the default 
 | Shallow clone | Warn that merge may require full history (`git fetch --unshallow`) |
 | Untracked files in working tree | Include in dirty-tree warning; offer to add to `.gitignore` |
 | Cross-repo subdirectory | Use `git rev-parse --show-toplevel` to operate from repo root |
+| Target branch is ahead of remote | Warn user that pushing after merge may require a force push (if they've rewritten history) |
 
 ## Examples
 
 **Interactive flow:**
 ```
 User: "merge my feature branch"
-→ Skill: current branch is `develop`. Here are available branches to merge:
-  1. feature/user-auth
-  2. fix/login-bug
+→ Skill: current branch is `feature/user-auth`. Here are target branches to merge into:
+  1. develop
+  2. main
   3. origin/develop
 → User: "1"
-→ Skill: Merging `feature/user-auth` into `develop`. Which strategy? (default: fast-forward)
+→ Skill: Merging `feature/user-auth` into `develop`. Switching to develop... done.
+  Which strategy? (default: fast-forward)
 → User: "--no-ff"
 → Skill: Merge successful. Push to remote?
 ```
@@ -166,12 +178,12 @@ User: "merge my feature branch"
 **Direct invocation:**
 ```
 User: "/aqs-git-merge feature/x -> develop"
-→ Skill: Validates branches, switches to `develop` if needed, merges `feature/x` with default strategy.
+→ Skill: Validates branches, switches to `develop`, merges `feature/x` with default strategy.
 ```
 
 **Conflict scenario:**
 ```
-User: "merge fix/urgent-hotfix"
+User: "merge fix/urgent-hotfix into develop"
 → Skill: Conflicts detected in: app/auth.py, tests/test_auth.py
 
 Options:

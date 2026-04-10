@@ -8,9 +8,13 @@ This document captures the implementation plan for the `aqs-git-merge` skill, wh
 
 ```
 skills/aqs-git-merge/
-├── SKILL.md        ← Main instructions + 9-step execution flow
+├── SKILL.md        ← Main instructions + 10-step execution flow
 └── reference.md    ← Merge strategies, conflict resolution, git command reference, edge cases
 ```
+
+## Core Direction
+
+The skill merges the **current branch (source)** into a **target branch** the user selects. This means the skill checks out the target branch first, then runs `git merge <source-branch>` on it.
 
 ## Requirements (from AgentPrompt.txt)
 
@@ -48,19 +52,24 @@ skills/aqs-git-merge/
 
 ### Step 3: Branch Context
 - Report current branch via `git branch --show-current`.
-- This branch is the **into-branch** (receives changes).
+- This branch is the **source branch** (its changes will be merged into the target).
 
-### Step 4: Discover Merge Targets
-- Local: `git branch --no-merged HEAD`
-- Remote: `git branch -r --no-merged HEAD`
+### Step 4: Discover Target Branches
+- Local: `git branch` (exclude current branch)
+- Remote: `git branch -r` (optional)
 - Present as a numbered list grouped by local and remote.
 
 ### Step 5: User Selection
-- Wait for user to pick a branch.
-- Confirm merge direction: `Merging <from-branch> into <current-branch>`.
-- **Direct invocation:** If invoked with `<from-branch> -> <into-branch>`, validate both branches exist, switch to `<into-branch>` if needed, then proceed to Step 6.
+- Wait for user to pick a target branch.
+- Confirm merge direction: `Merging <current-branch> into <target-branch>`.
+- **Direct invocation:** If invoked with `<from-branch> -> <into-branch>`, validate both branches exist, then proceed to Step 6.
 
-### Step 6: Merge Strategy Selection
+### Step 6: Switch to Target Branch
+- Run `git checkout <target-branch>`.
+- If checkout fails (dirty tree), offer to stash/commit first.
+- Verify with `git branch --show-current`.
+
+### Step 7: Merge Strategy Selection
 Present options:
 
 | Strategy | Flag | Behavior |
@@ -72,13 +81,13 @@ Present options:
 
 Also offer dry-run: `git merge --no-commit --no-ff <branch>`.
 
-### Step 7: Execute Merge
-- Run `git merge <strategy-flags> <from-branch>`.
-- **Clean merge:** Report success → Step 9.
+### Step 8: Execute Merge
+- Run `git merge <strategy-flags> <source-branch>`.
+- **Clean merge:** Report success → Step 10.
 - **Already up to date:** Report and exit.
-- **Conflicts:** → Step 8.
+- **Conflicts:** → Step 9.
 
-### Step 8: Conflict Handling
+### Step 9: Conflict Handling
 **The agent must NOT auto-resolve conflicts.**
 
 1. List conflicting files: `git diff --name-only --diff-filter=U`.
@@ -94,9 +103,10 @@ Also offer dry-run: `git merge --no-commit --no-ff <branch>`.
 
 3. Wait for user decision.
 
-### Step 9: Post-Merge
+### Step 10: Post-Merge
 - Report final state: `git status`, `git log --oneline -n 3`.
 - Offer to push to remote.
+- Offer to switch back to the original branch.
 - Provide undo guidance (`git reset --hard ORIG_HEAD`).
 
 ## Edge Cases
