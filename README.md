@@ -89,9 +89,9 @@ xcopy /E /I /Y skills\aqs-endsession "%USERPROFILE%\.qwen\skills\aqs-endsession"
 
 | Skill | Description |
 |---|---|
-| `aqs-endsession` | Save a session handoff note when wrapping up work |
-| `aqs-reattach` | Read the latest session handoff note and resume work |
-| `aqs-git-commit-and-push` | Commit all changes using conventional commit messages and push to remote |
+| `aqs-endsession` | Save a session handoff note when wrapping up — captures what was done, where work left off, and what to tackle next, so the next session resumes instantly |
+| `aqs-reattach` | Read the latest session handoff note and restore context — surfaces accomplishments, stopping point, and next tasks; auto-creates a todo list |
+| `aqs-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — handles upstream setup, merge conflict warnings, and edge cases without asking permission |
 
 ## Management
 
@@ -107,4 +107,4 @@ For detailed troubleshooting and known edge cases, see [Debugging](./Qwen%20Code
 
 ---
 
-*Last updated: 9 April 2026*
+*Last updated: 10 April 2026*

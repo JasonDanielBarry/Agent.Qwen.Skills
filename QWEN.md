@@ -55,9 +55,9 @@ For the canonical folder structure of a single Skill, see [Folder Structure](./A
 
 | Skill | Description |
 |---|---|
-| `aqs-endsession` | Save a lightweight session handoff note so the next session can pick up where this one left off |
-| `aqs-reattach` | Read the latest session handoff note and pick up where the previous session left off |
-| `aqs-git-commit-and-push` | Commit all changes using conventional commit messages and push to remote |
+| `aqs-endsession` | Save a session handoff note when wrapping up — captures what was done, where work left off, and what to tackle next |
+| `aqs-reattach` | Read the latest session handoff note and restore context — auto-creates todo list from next steps |
+| `aqs-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — no permission prompts |
 
 ## Management
 
@@ -95,4 +95,4 @@ For detailed management and troubleshooting, see the [Qwen Code Implementation N
 
 ---
 
-*Last updated: 9 April 2026*
+*Last updated: 10 April 2026*
