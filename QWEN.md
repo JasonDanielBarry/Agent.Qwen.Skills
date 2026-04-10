@@ -58,6 +58,7 @@ For the canonical folder structure of a single Skill, see [Folder Structure](./A
 | `aqs-endsession` | Save a session handoff note when wrapping up — captures what was done, where work left off, and what to tackle next |
 | `aqs-reattach` | Read the latest session handoff note and restore context — auto-creates todo list from next steps |
 | `aqs-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — no permission prompts |
+| `aqs-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, offers post-merge actions |
 
 ## Management
 

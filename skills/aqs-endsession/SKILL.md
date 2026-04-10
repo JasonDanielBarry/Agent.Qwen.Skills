@@ -3,9 +3,11 @@ name: aqs-endsession
 description: Save a lightweight session handoff note so the next session can pick up where this one left off. Use when ending work, wrapping up, saving progress, logging work, or creating a handoff.
 ---
 
-## Skill Goal
+# aqs-endsession
 
 This skill enables seamless continuity between Qwen Code sessions by capturing a concise, structured summary of what was accomplished, where work concluded, and what should be tackled next. It eliminates context loss when sessions end, so the next session (or another agent) can resume immediately without re-reading conversation history or re-discovering the state of the codebase.
+
+**Note:** This skill writes the session report directly without asking for user confirmation beforehand. The agent drafts the summary from conversation context and saves it immediately. After writing, the agent shows the user the file path and a brief preview, and can apply adjustments if requested.
 
 ## Instructions
 
@@ -14,9 +16,8 @@ This skill enables seamless continuity between Qwen Code sessions by capturing a
    - Otherwise, use the current directory as the workspace root.
    - Ensure `.sessions/` exists at the workspace root. Create it if needed.
 
-2. **Draft a summary from the conversation:**
-   - Review what was discussed and accomplished in the current session.
-   - Do not scan the filesystem or run git commands. The conversation context is sufficient.
+2. **Draft and write the report** to `.sessions/session-YYYYMMDD-HHmmss.md`:
+   - Review what was discussed and accomplished in the current session. Do not scan the filesystem or run git commands — conversation context is sufficient.
    - Draft content for all 3 required sections, using **bullet points** for each item:
      - `## What Was Done`
      - `## Where the Session Left Off`
@@ -25,8 +26,6 @@ This skill enables seamless continuity between Qwen Code sessions by capturing a
      - "Nothing completed this session."
      - "No open items — session was exploratory or informational."
      - "Nothing to pick up — no further action needed."
-
-3. **Write the report** to `.sessions/session-YYYYMMDD-HHmmss.md`:
    - Generate the filename using the current UTC timestamp.
    - If a file with the generated name already exists, append a sequence number: `session-YYYYMMDD-HHmmss-2.md`, `session-YYYYMMDD-HHmmss-3.md`, etc.
    - Include YAML frontmatter:
@@ -38,7 +37,8 @@ This skill enables seamless continuity between Qwen Code sessions by capturing a
      ```
    - Use forward slashes in `repo_path` regardless of OS.
    - Include all 3 required sections with content. Each section must have at least one bullet point or a short placeholder note.
+   - Write the file directly — do not ask the user for confirmation before writing.
 
-4. **Confirm the save:**
+3. **Confirm the save:**
    - Show the user the file path and a brief preview of what was saved.
    - Ask if adjustments are needed. If the user requests changes, update the file accordingly.

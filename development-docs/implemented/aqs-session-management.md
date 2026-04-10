@@ -70,16 +70,17 @@ These may be added later but are **not** in v1:
 
 **Steps**:
 
-1. **Draft a summary from the conversation** — review what was discussed and accomplished in the current session. Do not scan the filesystem or run git commands. The conversation context is sufficient.
+1. **Draft and write the summary** — review what was discussed and accomplished in the current session. Do not scan the filesystem or run git commands. The conversation context is sufficient. Write the report directly without asking the user for confirmation beforehand.
 
-2. **Always ask the user to confirm or adjust the draft** — present the 3 sections to the user and ask: "Does this capture what was done, where things stand, and where to pick up next?" Accept adjustments before writing.
-
-3. **Write the report** to `.sessions/session-YYYYMMDD-HHmmss.md`:
+2. **Write the report** to `.sessions/session-YYYYMMDD-HHmmss.md`:
    - Create `.sessions/` if it doesn't exist
    - Use the 3 required sections: `## What Was Done`, `## Where the Session Left Off`, `## Where to Pick Up Next`
    - Each section must have at least one bullet point or a short note (e.g., "Nothing completed this session")
+   - If a file with the generated name already exists, append a sequence number: `session-YYYYMMDD-HHmmss-2.md`, etc.
 
-4. **Confirm** — show the user the file path and a brief preview of what was saved. Ask if they want to adjust anything.
+3. **Confirm** — show the user the file path and a brief preview of what was saved. Ask if adjustments are needed.
+
+**Note:** `.sessions/` must be tracked by git (not added to `.gitignore`) so that other machines can receive session files via pull.
 
 ---
 
@@ -89,36 +90,39 @@ These may be added later but are **not** in v1:
 
 **Trigger**: `/skills aqs-reattach` or prompts like "reattach", "continue from last session", "restore session".
 
+**Note**: This skill must be invoked from a **repository root** (a directory containing `.git`). If called from a subdirectory, it displays an error and exits.
+
 **Steps**:
 
-1. **Scope by repo** — compare the current working directory against `repo_path` values in `.sessions/` file frontmatter (normalize both to forward slashes). Filter to only files whose `repo_path` matches the current directory or a parent of it. If no match is found, fall back to scanning all files and display a warning: "No session reports found for this workspace. Showing the most recent report from another workspace."
+1. **Validate the current directory** — if the current directory does not contain `.git`, display an error and exit: "aqs-reattach must be run from a repository root (a directory containing `.git`). You are currently in a subdirectory. Navigate to the repo root and try again." If `.git` is present, use the current directory as the workspace root.
 
-2. **Find the latest report** — scan `.sessions/` for `session-*.md` files (filtered per step 1). Parse each filename for its timestamp. For files where the timestamp parses, compare by timestamp. For files where it doesn't parse, fall back to file modification time. Pick the overall most recent file by whichever method applies.
+2. **Scope by repo** — compare the current working directory against `repo_path` values in `.sessions/` file frontmatter (normalize both to forward slashes). Filter to only files whose `repo_path` matches the current directory **exactly**. If no match is found, fall back to scanning all files and display a warning: "No session reports found for this workspace. Showing the most recent report from another workspace."
 
-3. **If no report found** — if `.sessions/` doesn't exist, tell the user: "No `.sessions/` directory found. Run aqs-endsession first to save your session state." If `.sessions/` exists but contains no `session-*.md` files, tell the user: "`.sessions/` exists but no session reports found. Run aqs-endsession first to save your session state."
+3. **Find the latest report** — scan `.sessions/` for `session-*.md` files (filtered per step 2). Parse each filename for its timestamp. For files where the timestamp parses, compare by timestamp. For files where it doesn't parse, fall back to file modification time. Pick the overall most recent file by whichever method applies.
 
-4. **Read the report** and validate its content:
+4. **If no report found** — if `.sessions/` doesn't exist, tell the user: "No `.sessions/` directory found. Run aqs-endsession first to save your session state." If `.sessions/` exists but contains no `session-*.md` files, tell the user: "`.sessions/` exists but no session reports found. Run aqs-endsession first to save your session state."
+
+5. **Read the report** and validate its content:
    - If the file is empty or has invalid YAML frontmatter, skip it and try the next most recent file. If no valid file remains, tell the user: "No valid session report found. Run aqs-endsession first."
    - Extract content under each of the 3 section headers (`## What Was Done`, `## Where the Session Left Off`, `## Where to Pick Up Next`). Ignore any content outside these sections.
-   - If any of the 3 sections are missing, report which ones are absent. Continue with available sections. If `## Where to Pick Up Next` is missing, skip todo list creation (see step 7).
+   - If any of the 3 sections are missing, report which ones are absent. Continue with available sections. If `## Where to Pick Up Next` is missing, skip todo list creation (see step 8).
 
-5. **Validate the repo path** — compare `repo_path` from frontmatter with the current working directory (normalize both to forward slashes):
-   - **Match or subdirectory**: proceed with a note: "Note: Current directory is a subdirectory of the session's repo. Session context applies to the parent repo."
-   - **Mismatch**: warn the user and ask if they want to proceed anyway
+6. **Validate the repo path** — compare `repo_path` from frontmatter with the current working directory (normalize both to forward slashes):
+   - **Mismatch**: warn the user and ask if they want to proceed anyway.
 
-6. **Check session age** — normalize `session_date` to UTC before comparing:
+7. **Check session age** — normalize `session_date` to UTC before comparing:
    - If `session_date` is in the future, skip the age check and proceed normally.
    - If `session_date` cannot be parsed, skip the age check and proceed with a note: "Session date is invalid — age cannot be determined."
    - If `session_date` is strictly greater than 168 hours (7 days) in the past, display a non-blocking warning: "This session is {X} days old. Context may be outdated."
 
-7. **Restore context** — display a concise summary:
+8. **Restore context** — display a concise summary:
    - What was done
    - Where the session left off
    - Where to pick up next
 
    **Adopt the "Where to Pick Up Next" section as the active task list for this session.** If a todo list already exists, merge the "Where to Pick Up Next" items into it (deduplicating by content). If no todo list exists, create one from the section's bullet points. If the section is empty, contains only non-actionable content (e.g., "Nothing specific," "TBD"), or is missing, skip todo list creation and ask the user what they'd like to work on.
 
-8. **Confirm readiness** — briefly state that context is loaded and you're ready to continue.
+9. **Confirm readiness** — briefly state that context is loaded and you're ready to continue.
 
 ---
 
@@ -138,17 +142,15 @@ description: Save a lightweight session handoff note so the next session can pic
 **Instructions**:
 
 1. Determine the workspace root: if the current directory contains `.git` (or has one in a parent), use that; otherwise, use the current directory. Ensure `.sessions/` exists there. Create it if needed.
-2. Draft a summary from the conversation — what was done, where things stopped, what to do next. Do not scan the filesystem or run git commands.
-3. Always ask the user to confirm or adjust the draft before writing. Present all 3 sections: "Does this capture what was done, where things stand, and where to pick up next?" Accept adjustments.
-4. Write `.sessions/session-YYYYMMDD-HHmmss.md` with:
+2. Draft and write the summary: review what was discussed and accomplished. Do not scan the filesystem or run git commands. Write the report directly without asking the user for confirmation beforehand.
+3. Write `.sessions/session-YYYYMMDD-HHmmss.md` with:
    - YAML frontmatter: `session_date` (ISO 8601, UTC), `repo_path` (forward slashes)
-   - `## What Was Done`
-   - `## Where the Session Left Off`
-   - `## Where to Pick Up Next`
+   - `## What Was Done`, `## Where the Session Left Off`, `## Where to Pick Up Next`
    - If a file with the generated name already exists, append a sequence number: `session-YYYYMMDD-HHmmss-2.md`, etc.
-5. Each section must have content. If the agent's draft is empty, ask the user to fill it in.
-6. Add `.sessions/` to `.gitignore` if it isn't already.
-7. Confirm the save and show the file path. Ask if adjustments are needed.
+4. Each section must have content. If the agent's draft is empty, use brief placeholders.
+5. Confirm the save and show the file path. Ask if adjustments are needed.
+
+**Note:** `.sessions/` must be tracked by git (not added to `.gitignore`) so that other machines can receive session files via pull.
 
 ---
 
@@ -165,19 +167,19 @@ description: Read the latest session handoff note and pick up where the previous
 
 **Instructions**:
 
-1. Determine the workspace root: if the current directory contains `.git` (or has one in a parent), use that; otherwise, use the current directory.
-2. Scope by repo: compare the current working directory against `repo_path` values in `.sessions/` file frontmatter (normalize to forward slashes). Filter to files whose `repo_path` matches the current directory or a parent. If no match, fall back to all files with warning: "No session reports for this workspace. Showing most recent from another workspace."
-3. Find the most recent `session-*.md` in `.sessions/` (filtered per step 2). Parse each filename for its timestamp. For files where the timestamp parses, compare by timestamp. For files where it doesn't parse, fall back to file modification time. Pick the overall most recent file.
-4. If `.sessions/` doesn't exist: "No `.sessions/` directory found. Run aqs-endsession first." If it exists but is empty: "`.sessions/` exists but no session reports found. Run aqs-endsession first."
-5. Read the selected file. If it's empty or has invalid YAML, skip it and try the next most recent file. If no valid file remains: "No valid session report found. Run aqs-endsession first."
-6. Extract content under each of the 3 section headers. Ignore content outside these sections. If any section is missing, report it. If `## Where to Pick Up Next` is missing, skip todo creation (see step 9).
-7. Ignore any frontmatter fields beyond `session_date` and `repo_path`.
-8. Compare `repo_path` from frontmatter with current working directory (normalize to forward slashes):
-   - Match or subdirectory: proceed with note: "Current directory is a subdirectory of the session's repo. Session context applies to the parent repo."
+1. Validate the current directory: if it does not contain `.git`, error and exit: "aqs-reattach must be run from a repository root."
+2. Determine the workspace root: use the current directory (it contains `.git`).
+3. Scope by repo: compare the current working directory against `repo_path` values in `.sessions/` file frontmatter (normalize to forward slashes). Filter to files whose `repo_path` matches the current directory **exactly**. If no match, fall back to all files with warning: "No session reports for this workspace. Showing most recent from another workspace."
+4. Find the most recent `session-*.md` in `.sessions/` (filtered per step 3). Parse each filename for its timestamp. For files where the timestamp parses, compare by timestamp. For files where it doesn't parse, fall back to file modification time. Pick the overall most recent file.
+5. If `.sessions/` doesn't exist: "No `.sessions/` directory found. Run aqs-endsession first." If it exists but is empty: "`.sessions/` exists but no session reports found. Run aqs-endsession first."
+6. Read the selected file. If it's empty or has invalid YAML, skip it and try the next most recent file. If no valid file remains: "No valid session report found. Run aqs-endsession first."
+7. Extract content under each of the 3 section headers. Ignore content outside these sections. If any section is missing, report it. If `## Where to Pick Up Next` is missing, skip todo creation (see step 10).
+8. Ignore any frontmatter fields beyond `session_date` and `repo_path`.
+9. Compare `repo_path` from frontmatter with current working directory (normalize to forward slashes):
    - Mismatch: warn user, ask to confirm before proceeding.
-9. Normalize `session_date` to UTC. If it's in the future, skip age check. If unparseable, skip with note: "Session date is invalid — age cannot be determined." If strictly greater than 168 hours old, warn: "This session is {X} days old. Context may be outdated."
-10. Display the summary: what was done, where it left off, where to pick up. If a todo list already exists, merge the "Where to Pick Up Next" items into it (deduplicating by content). If no todo list exists, create one from the bullet points. If the section is empty, missing, or non-actionable, ask the user what they'd like to work on.
-11. Confirm you have context and are ready to continue.
+10. Normalize `session_date` to UTC. If it's in the future, skip age check. If unparseable, skip with note: "Session date is invalid — age cannot be determined." If strictly greater than 168 hours old, warn: "This session is {X} days old. Context may be outdated."
+11. Display the summary: what was done, where it left off, where to pick up. If a todo list already exists, merge the "Where to Pick Up Next" items into it (deduplicating by content). If no todo list exists, create one from the bullet points. If the section is empty, missing, or non-actionable, ask the user what they'd like to work on.
+12. Confirm you have context and are ready to continue.
 
 ---
 
@@ -194,7 +196,7 @@ description: Read the latest session handoff note and pick up where the previous
 | File empty or invalid YAML | `reattach` skips it, tries next most recent |
 | Missing sections in report | `reattach` reports which are missing; skips todo creation if "Pick Up Next" absent |
 | Repo path mismatch | `reattach` warns and asks for confirmation |
-| Subdirectory of saved repo | `reattach` proceeds with informational note |
+| Subdirectory of saved repo | `reattach` errors and exits: must be run from repo root |
 | Session older than 7 days | `reattach` displays non-blocking warning (strictly > 168 hours) |
 | Future-dated session | `reattach` skips age check, proceeds normally |
 | Invalid/unparseable `session_date` | `reattach` skips age check with note, proceeds |
@@ -209,7 +211,7 @@ description: Read the latest session handoff note and pick up where the previous
 
 ### Core Tests
 
-1. **Endsession creates a report** — do work, run endsession, verify the agent drafts a summary, asks for confirmation, then writes file with 3 sections and correct frontmatter.
+1. **Endsession creates a report** — do work, run endsession, verify the agent writes the file directly (no pre-write confirmation) with 3 sections and correct frontmatter, then shows the user the file path and preview.
 2. **Reattach loads the report** — run reattach, verify agent displays summary and adopts "Where to Pick Up Next" as active tasks.
 3. **Most recent report wins** — run endsession twice, run reattach, verify the newer report is loaded.
 4. **No report found** — run reattach on a fresh repo, verify appropriate message.
@@ -225,13 +227,11 @@ description: Read the latest session handoff note and pick up where the previous
 11. **Invalid session date** — create a report with `session_date: not-a-date`, verify reattach skips age check with note.
 12. **Extra frontmatter fields** — create a report with `user`, `branch`, `tags`, verify reattach ignores them.
 13. **Non-actionable "Pick Up Next"** — create a report with `- TBD` as the only item, verify reattach asks user for direction.
-14. **Subdirectory reattach** — run reattach from a subdirectory of the saved `repo_path`, verify informational note is displayed.
+14. **Subdirectory reattach** — run reattach from a subdirectory of the saved `repo_path`, verify error message and exit.
 15. **7-day boundary** — create a report exactly 7 days old (no warning) and one at 7 days + 1 minute (warning), verify threshold behavior.
 16. **Cross-workspace fallback** — create a report with a different `repo_path` in the same `.sessions/`, verify reattach loads it with a cross-workspace warning.
 17. **Todo merge** — start a session with an existing todo list, run reattach, verify items are merged (not replaced) and duplicates are removed.
-18. **User confirmation flow** — run endsession with minimal conversation context, verify agent always drafts a summary and asks for confirmation before writing.
-
-Full stress test plan: [aqs-session-management-stress-test.md](./aqs-session-management-stress-test.md)
+18. **Skip-to-write flow** — run endsession with minimal conversation context, verify agent writes the report directly without asking for confirmation beforehand, then shows file path and offers adjustments.
 
 ---
 

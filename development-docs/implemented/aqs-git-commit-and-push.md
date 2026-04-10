@@ -16,6 +16,7 @@ Commits all changes using conventional commit messages and pushes to the remote 
 - Reports working tree status after commit
 - Checks for in-progress operations (merge, rebase, cherry-pick) and warns before proceeding
 - Matches recent commit message style from `git log -n 3`
+- Runs `git diff HEAD` to review the full diff of all changes — the agent uses this to understand what was modified before writing the commit message (the diff is reviewed internally by the agent, not shown to the user)
 
 ## Commit Types Supported
 

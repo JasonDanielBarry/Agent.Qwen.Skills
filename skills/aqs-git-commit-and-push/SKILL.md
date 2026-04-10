@@ -17,7 +17,7 @@ When invoked, this skill stages all changes, creates one or more conventional co
 
 1. **Check current state:**
    - Run `git status` to see what has changed
-   - Run `git diff HEAD` to review the full diff of all changes
+   - Run `git diff HEAD` to review the full diff of all changes — use this to understand what was modified before writing the commit message
    - Run `git log -n 3 --oneline` to review recent commit message style
    - Check for in-progress operations: if `git status` mentions a merge, rebase, cherry-pick, or conflict in progress, display a warning but proceed with staging and committing.
 
