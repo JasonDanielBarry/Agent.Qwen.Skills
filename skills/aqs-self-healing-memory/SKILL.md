@@ -18,6 +18,7 @@ skills/aqs-self-healing-memory/
 ├── SKILL.md          ← This file (instructions)
 ├── MEMORY.md         ← Index (always loaded; ~150 char pointers)
 ├── topics/           ← Topic files (loaded on-demand)
+│   ├── _README.md    ← Naming conventions and structure guidelines
 │   └── *.md
 └── transcripts/      ← Session logs (grep only; never loaded into context)
     └── YYYY-MM-DD.md
@@ -30,6 +31,7 @@ skills/aqs-self-healing-memory/
 3. **NEVER store derivable facts.** If it can be re-derived from the codebase, don't store it.
 4. **ALWAYS include provenance.** Every entry must have Created date, Source, Last Verified, and Status.
 5. **ALWAYS resolve conflicts immediately.** When memory conflicts with live code, update memory and log it.
+6. **PREFER existing tags from the Tag Conventions table.** Only invent new tags if the knowledge area truly doesn't fit any existing category, and document the new tag in MEMORY.md.
 
 ---
 
@@ -153,6 +155,12 @@ If a correction later turns out to be wrong, the superseded section preserves th
 
 ## Retrieval Decision Tree
 
+**When to scan MEMORY.md:**
+- At session start (after `aqs-reattach` or when user describes a project)
+- Before starting a new task or feature
+- When the user asks about project context, architecture, or past decisions
+- When you're unsure about a pattern and want to check prior knowledge
+
 When the user asks a question or starts a task:
 
 ```
@@ -203,6 +211,36 @@ Since there is no background agent, consolidation is a manual session. Trigger i
    Deleted: [N] entries.
    Summarized: [N] groups of entries.
    ```
+
+### Size Thresholds
+
+| Threshold | Trigger | Action |
+|---|---|---|
+| **Topic file > ~100 lines** | File has grown large | Summarize related entries; move details to Superseded; consider splitting into sub-topics |
+| **Topic file > ~200 lines** | File is unwieldy | Split into multiple topic files by sub-domain (e.g., `auth-patterns.md`, `auth-decisions.md`) |
+| **MEMORY.md > ~50 entries** | Index is getting dense | Review for deprecated/superseded entries to clean up; consolidate overlapping topics |
+| **Transcripts > 7 days old** | Historical logs accumulating | No action needed — transcripts are grep-only; archive to `transcripts/archive/` if directory gets slow |
+
+---
+
+## MEMORY.md Recovery
+
+If MEMORY.md is missing, corrupted, or empty:
+
+1. **Check for backups** — look in git history for the last known-good version:
+   ```bash
+   git log --oneline -- skills/aqs-self-healing-memory/MEMORY.md
+   git show <commit>:skills/aqs-self-healing-memory/MEMORY.md
+   ```
+2. **If no backup exists** — rebuild from topic files:
+   - Scan all topic files in `topics/`
+   - For each active entry, create a ~150-char Index pointer
+   - Add to MEMORY.md under the appropriate section
+   - Mark all as "Last Verified: today" with Source: `memory-rebuild`
+3. **If topic files are also missing** — start fresh:
+   - Create a new MEMORY.md with the standard template (see `topics/_README.md`)
+   - Log the rebuild in transcripts as `MEMORY_REBUILD`
+4. **After recovery** — verify all rebuilt entries against live code within the next few sessions
 
 ---
 
