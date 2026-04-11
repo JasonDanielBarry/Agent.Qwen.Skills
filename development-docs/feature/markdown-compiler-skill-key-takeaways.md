@@ -51,6 +51,85 @@ The `sas-semantic-compiler` aggressively optimizes markdown documents for AI age
 
 ---
 
+## Semantic Constraint Framework Integration
+
+**CRITICAL:** The Semantic Constraint Framework already defines exactly what a "properly constrained" AI document looks like. The compiler's output **MUST** conform to this standard.
+
+### 10 Universal Required Sections
+
+Every compiled output **MUST** include all 10 universal sections:
+
+1. **Purpose** — why this artifact exists
+2. **Scope** — what it covers and what it excludes
+3. **Inputs** — explicit sources, formats, and preconditions
+4. **Outputs** — artifacts produced or state changes made
+5. **Constraints** — hard boundaries on behavior, data, and side effects
+6. **Invariants** — conditions that must hold across all execution paths
+7. **Failure Modes** — how missing info, errors, and edge cases are handled
+8. **Validation Strategy** — how correctness is verified
+9. **Relationships** — dependencies, ordering, and boundaries with other artifacts
+10. **Guarantees** — postconditions the artifact commits to
+
+Plus **type-specific sections** (Skills have Invocation Conditions/Forbidden Usage/Phase Separation; Plans have Data Model/Architecture/Key Operations/etc.)
+
+### Declarative Language Rules
+
+Compiled output **MUST** use declarative language, not suggestions:
+- ✅ **Prefer:** `must`, `must not`, `required`, `forbidden`, `guaranteed`
+- ❌ **Avoid:** `try to`, `ideally`, `if possible`, `approximately`
+
+### Uncertainty Handling
+
+If something is not decided in source:
+- Do not guess
+- Do not imply defaults
+- Do not leave it implicit
+- Instead write: "This is currently unspecified and must be decided before use."
+
+### Negative Constraints
+
+Compiled output **MUST** explicitly state what the agent must **not** do. Blocking unwanted behavior is more effective than only prescribing desired behavior.
+
+### KERNEL Constraint Framework
+
+All compiled artifacts must satisfy:
+
+| Letter | Principle | Purpose |
+|--------|-----------|---------|
+| **K** | Keep it simple | Single, unambiguous primary goal — prevents scope creep |
+| **E** | Easy to verify | Pre-defined success metrics and quality checkpoints |
+| **R** | Reproducible results | Identical inputs must produce equivalent outputs |
+| **N** | Narrow scope | Explicit domain and task limits — no general-purpose behavior |
+| **E** | Explicit constraints | Hard boundaries on data sources, tools, and capabilities |
+| **L** | Logical structure | Strict structural, token, or styling boundaries |
+
+### Human vs AI Optimization Dial
+
+The framework defines two modes — the compiler produces the AI-optimized end:
+
+| Human-Optimized | AI-Optimized |
+|-----------------|--------------|
+| Explanatory prose | Minimal prose |
+| Friendly narrative | Dense constraints |
+| Justification and context | Explicit guarantees |
+| Designed for onboarding | Zero ambiguity |
+
+**Same meaning, different surface. The compiler controls the dial.**
+
+### Impact on Compiler Pipeline
+
+The compiler pipeline **MUST** include a **"Semantic Constraint Injection"** pass that:
+- Ensures output includes all 10 universal sections
+- Adds type-specific sections based on document type
+- Converts all language to declarative form
+- Adds negative constraints
+- Declares uncertainty explicitly
+- Validates against KERNEL framework
+
+→ **Action:** Update pipeline architecture to include Semantic Constraint Injection as explicit optimization pass
+
+---
+
 ## Output
 
 ### Format
@@ -272,7 +351,7 @@ Linker → executable or library
   - Without an IR layer, transformation logic mixes with formatting logic, causing edge cases, broken formatting, and lost context.
   - *Benefit:* Enables swapping output formats later without rewriting transforms, running validation against the IR, and adding new optimization passes without breaking existing ones.
 
-#### Recommended Streamlined 5-Stage Pipeline
+#### Recommended Streamlined 6-Stage Pipeline
 
 ```
 Source (.human.md)
@@ -293,7 +372,15 @@ Source (.human.md)
    - Pass 2: Add explicit tags, priority markers, IF/THEN/ELSE structures
    - Pass 3: Cross-reference linking, constraint grouping
    ↓
-[5] Code Generation
+[5] Semantic Constraint Injection
+   - Ensures all 10 universal sections present (Purpose, Scope, Inputs, Outputs, Constraints, Invariants, Failure Modes, Validation, Relationships, Guarantees)
+   - Adds type-specific sections (Skills: Invocation/Forbidden/Phase Separation; Plans: Data Model/Architecture/etc.)
+   - Converts all language to declarative form (must/must not, not try/ideally)
+   - Adds negative constraints
+   - Declares uncertainty explicitly
+   - Validates against KERNEL framework
+   ↓
+[6] Code Generation
    - Emits final output in target format (JSON/YAML/Optimized MD)
    - Adds traceability header + timestamp
 ```
@@ -306,10 +393,11 @@ Source (.human.md)
 | AST | Document Structure Tree | ⚡ Simplified | Gives passes a tree to traverse, no type/scope complexity |
 | IR | Semantic IR | ✅ Yes | Strips formatting, isolates pure meaning/instructions |
 | Optimization | Multi-pass optimizer | ✅ Yes | Each pass does one thing well (strip, structure, tag) |
+| — | Semantic Constraint Injection | ✅ NEW | Ensures 10 universal sections, declarative language, KERNEL validation |
 | Machine Code | Target Format | ✅ Yes | Final AI-readable output |
 | Linker | None | ❌ Drop | Preprocessor already resolves cross-doc references |
 
-**Conclusion:** Don't replicate C++ 1:1. Use a **5-stage pipeline** tailored for semantic document compilation. Keep the IR (it's the biggest architectural win), drop the linker, and simplify the AST to a Document Structure Tree. The key is keeping the stages that give **determinism, debuggability, and composability** while cutting the rest.
+**Conclusion:** Don't replicate C++ 1:1. Use a **6-stage pipeline** tailored for semantic document compilation. Keep the IR (it's the biggest architectural win), add Semantic Constraint Injection (ensures framework compliance), drop the linker, and simplify the AST to a Document Structure Tree. The key is keeping the stages that give **determinism, debuggability, and composability** while cutting the rest.
 
 ---
 

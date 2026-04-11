@@ -394,6 +394,144 @@ This produces:
 
 ---
 
+## Incomplete Work — What Still Needs to Be Done
+
+This framework is the foundation of the entire project. The sections below are **gaps that must be filled** before the framework is considered complete.
+
+### 1. Worked Examples (Before/After Artifacts)
+
+**Problem:** The framework describes what sections an artifact must have, but never shows a complete, real-world example of an unconstrained document transformed into a semantically constrained one.
+
+**What's needed:**
+- At least one complete "before" (human-optimized) → "after" (AI-optimized) transformation for each major artifact type (Plan, Skill, Memory Note)
+- Each example should demonstrate all 10 universal sections
+- Examples should show how vague prose becomes explicit constraints
+
+**Why it matters:** Without concrete examples, agents and humans alike will struggle to produce artifacts that satisfy the framework.
+
+---
+
+### 2. Constraint Conflict Resolution Rules
+
+**Problem:** What happens when two constraints in the same artifact contradict each other? Which constraint wins? There is no guidance on constraint hierarchy or tradeoff decisions.
+
+**What's needed:**
+- Define a constraint priority model (e.g., Invariants > Constraints > Preferences)
+- Define a resolution algorithm for when conflicts are detected
+- Define explicit behavior for unresolvable conflicts (halt, flag, defer to human?)
+
+**Why it matters:** Unresolved constraint conflicts are a leading cause of agent hallucination and non-deterministic behavior.
+
+---
+
+### 3. Artifact-to-Artifact Conflict Resolution
+
+**Problem:** If a Skill says "always do X" but a Plan says "never do X", how is this detected? Who resolves it? How do agents know which artifact takes precedence?
+
+**What's needed:**
+- Define an artifact authority hierarchy (which artifact type wins in conflicts)
+- Define a detection mechanism (how agents identify cross-artifact conflicts)
+- Define a resolution protocol (what happens when a conflict is found)
+
+**Why it matters:** Multi-artifact projects will inevitably develop contradictions if there's no mechanism to detect and resolve them.
+
+---
+
+### 4. Versioning & Migration Strategy
+
+**Problem:** As the framework evolves, existing artifacts become stale. There is no guidance on how to migrate artifacts when framework rules change.
+
+**What's needed:**
+- Define artifact versioning scheme (how to track which framework version an artifact was written against)
+- Define migration rules (what changes when framework is updated)
+- Define backward compatibility policy
+- Define how to detect stale artifacts that need migration
+
+**Why it matters:** Without versioning, artifacts will drift and become inconsistent with current framework rules over time.
+
+---
+
+### 5. Verification Function (VF) Specification
+
+**Problem:** The framework mentions "Python VFs" and "Natural Language VFs" but does not define a standard format, schema, or validation protocol for either.
+
+**What's needed:**
+- Standard format/schema for Python VFs (function signature, return type, assertion style, error reporting)
+- Standard format/schema for Natural Language VFs (structured prompt template, evaluation criteria, pass/fail reporting)
+- Protocol for running VFs and aggregating results
+- Protocol for handling VF failures (retry, replan, escalate)
+
+**Why it matters:** Without a standard VF specification, verification will be inconsistent and unreliable.
+
+---
+
+### 6. Constraint Sufficiency — "When Is It Constrained Enough?"
+
+**Problem:** There is no guidance on when to stop adding constraints. What's the stopping criterion?
+
+**What's needed:**
+- Define a "constraint sufficiency" test (e.g., "every execution path has at least one applicable constraint")
+- Define minimum constraint density guidelines per artifact type
+- Define a self-check protocol: "Have I constrained everything that could go wrong?"
+
+**Why it matters:** Over-constraining wastes context window and adds complexity. Under-constraining leaves gaps for agent hallucination.
+
+---
+
+### 7. Artifact Granularity Guidelines
+
+**Problem:** When should you split one artifact into two? What's too big vs. too small?
+
+**What's needed:**
+- Define maximum artifact size guidelines (token counts, section counts)
+- Define splitting criteria (when to break one artifact into two)
+- Define merging criteria (when two artifacts should be one)
+
+**Why it matters:** Artifacts that are too large overwhelm context windows. Artifacts that are too small fragment knowledge and create maintenance burden.
+
+---
+
+### 8. Section Depth Guidance
+
+**Problem:** Each of the 10 universal sections could be one sentence or three paragraphs. There is no guidance on how deep each section should be.
+
+**What's needed:**
+- Define minimum and maximum guidance per section type (e.g., "Purpose: 1-2 sentences", "Constraints: 5-15 explicit rules")
+- Define when a section should be expanded vs. kept minimal
+- Define what "complete" looks like for each section type
+
+**Why it matters:** Without depth guidance, agents will either write paragraphs of prose for each section or one-line summaries that miss critical detail.
+
+---
+
+### 9. Validation Strategy Specification
+
+**Problem:** The framework lists "Validation Strategy" as a required section but does not define what "good" validation looks like.
+
+**What's needed:**
+- Define validation strategy templates per artifact type
+- Define minimum validation coverage requirements
+- Define validation report format (what to log, how to report pass/fail)
+- Define escalation protocol (what happens when validation fails)
+
+**Why it matters:** Without a standard validation approach, artifacts will have inconsistent or meaningless validation sections.
+
+---
+
+### 10. Constraint Language Standardization
+
+**Problem:** The framework says "use declarative language" but does not define a formal constraint language or grammar.
+
+**What's needed:**
+- Define a formal constraint grammar (syntax for expressing rules)
+- Define constraint types (prohibitive, permissive, mandatory, conditional)
+- Define how to express constraint scope (global, file-specific, type-specific)
+- Define how to express constraint temporal behavior (always, once, during specific phase)
+
+**Why it matters:** A formal constraint grammar enables automated validation, conflict detection, and machine-readable constraint parsing.
+
+---
+
 ## Final Mental Model
 
 - AI is probabilistic
