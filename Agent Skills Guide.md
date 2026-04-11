@@ -224,6 +224,18 @@ Add helper scripts the agent can execute, or templates it can fill in.
 3. Verify the Skill loads and instructions are followed
 4. Use the agent's explicit invocation command if needed
 
+### This Project's Standard: Semantic Constraint Framework
+
+While the concepts in this guide are universal, **all Skills in this repository must conform to the [Semantic Constraint Framework](./Semantic%20Constraint%20Framework.md)** — a structured methodology for constraining probabilistic AI behavior into reliably deterministic outcomes.
+
+The framework defines:
+- **10 universal required sections** every semantic artifact must include (Purpose, Scope, Inputs, Outputs, Constraints, Invariants, Failure Modes, Validation Strategy, Relationships, Guarantees)
+- **Type-specific sections** for each artifact type (Skills, Plans, Tools, Memory, etc.)
+- **Proven constraint techniques** — prompt chaining, verification functions, formal invariants, the KERNEL framework, self-verification loops
+- **Validation rules** for detecting and correcting constraint violations
+
+When creating a Skill for this project, apply the framework's Skill-specific requirements on top of the universal base described in this guide. The framework is the governing standard; this guide provides the foundational concepts.
+
 ---
 
 ## Quick-Start Checklist
@@ -236,6 +248,7 @@ Before deploying a Skill, confirm each item:
 - [ ] Instructions are step-by-step, not vague prose
 - [ ] No hardcoded paths, secrets, or environment-specific values
 - [ ] All referenced files (reference docs, scripts, templates) exist in the Skill folder
+- [ ] **Conforms to the [Semantic Constraint Framework](./Semantic%20Constraint%20Framework.md)** — all universal required sections present, type-specific sections satisfied
 - [ ] Agent restarts and loads the Skill when prompted with description keywords
 - [ ] Skill folder name matches the `name` in metadata
 - [ ] Scripts handle missing dependencies gracefully
