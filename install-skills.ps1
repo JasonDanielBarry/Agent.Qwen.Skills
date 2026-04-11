@@ -25,10 +25,19 @@ Write-Host ""
 
 $installed = 0
 
+# Skills that must NOT be installed to the machine (repo-local only)
+$excludedSkills = @("sas-install-skills")
+
 Get-ChildItem -Path $SkillsSource -Directory | ForEach-Object {
     $skillName = $_.Name
     $sourcePath = $_.FullName
     $destPath = Join-Path $SkillsDest $skillName
+
+    # Skip repo-local skills
+    if ($excludedSkills -contains $skillName) {
+        Write-Host "Skipping (repo-local): $skillName" -ForegroundColor DarkGray
+        return
+    }
 
     Write-Host "Installing: $skillName" -NoNewline
 

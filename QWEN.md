@@ -63,6 +63,7 @@ For the canonical folder structure of a single Skill, see [Folder Structure](./A
 | `sas-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — no permission prompts |
 | `sas-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, offers post-merge actions |
 | `sas-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification and conflict resolution |
+| `sas-install-skills` | Install or update all skills from this repo to the local machine — **repo-local only, must not be installed to the machine** |
 
 ## Management
 
