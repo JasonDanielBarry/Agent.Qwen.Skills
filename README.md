@@ -72,7 +72,7 @@ install-skills.bat
 
 **Windows (PowerShell):**
 ```powershell
-.\install-skills.ps1
+.\install-sas-skills.ps1
 ```
 
 The script will:
@@ -98,7 +98,7 @@ xcopy /E /I /Y skills\sas-endsession "%USERPROFILE%\.qwen\skills\sas-endsession"
 | `sas-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — handles upstream setup, merge conflict warnings, and edge cases without asking permission |
 | `sas-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, and offers post-merge actions |
 | `sas-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification-first retrieval, conflict resolution, and lifecycle management |
-| `sas-install-skills` | Install or update all skills from this repo to the local machine via `install-skills.ps1` — **repo-local only** (lives in `.qwen/skills/`, not installed to machine) |
+| `install-sas-skills` | Install or update all skills from this repo to the local machine via `install-sas-skills.ps1` — **repo-local only** (lives in `.qwen/skills/`, not installed to machine) |
 
 ## Management
 

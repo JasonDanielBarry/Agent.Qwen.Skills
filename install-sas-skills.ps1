@@ -1,5 +1,5 @@
 ﻿# Install Skills Script (PowerShell)
-# Run from repo root: .\install-skills.ps1
+# Run from repo root: .\install-sas-skills.ps1
 
 $ErrorActionPreference = "Stop"
 
