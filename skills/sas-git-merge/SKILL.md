@@ -1,5 +1,5 @@
 ---
-name: aqs-git-merge
+name: sas-git-merge
 description: Merge branches interactively with guided conflict resolution. Use when the user wants to merge branches, review merge options, or handle merge conflicts.
 ---
 
@@ -77,7 +77,7 @@ Determine if the current working directory is inside a git repository:
 - Wait for the user to pick a target branch from the list.
 - Confirm the merge direction: `Merging <current-branch> into <target-branch>`.
 
-**Direct invocation:** If the user invoked the skill with explicit branch names (e.g., `/aqs-git-merge feature/x -> develop`):
+**Direct invocation:** If the user invoked the skill with explicit branch names (e.g., `/sas-git-merge feature/x -> develop`):
 - Validate that both branches exist.
 - The `<from-branch>` is `feature/x`, the `<into-branch>` is `develop`.
 - If the current branch is the `<into-branch>`, skip to Step 6 with the source branch already known.
@@ -194,7 +194,7 @@ User: "merge my feature branch"
 
 **Direct invocation:**
 ```
-User: "/aqs-git-merge feature/x -> develop"
+User: "/sas-git-merge feature/x -> develop"
 → Skill: Validates branches, switches to `develop`, merges `feature/x` with default strategy.
 ```
 

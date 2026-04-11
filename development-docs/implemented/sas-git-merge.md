@@ -1,13 +1,13 @@
-# aqs-git-merge — Implementation Plan
+# sas-git-merge — Implementation Plan
 
 ## Overview
 
-This document captures the implementation plan for the `aqs-git-merge` skill, which provides a guided, safe workflow for merging branches with user control at every decision point.
+This document captures the implementation plan for the `sas-git-merge` skill, which provides a guided, safe workflow for merging branches with user control at every decision point.
 
 ## Skill File Structure
 
 ```
-skills/aqs-git-merge/
+skills/sas-git-merge/
 ├── SKILL.md        ← Main instructions + 10-step execution flow
 └── reference.md    ← Merge strategies, conflict resolution, git command reference, edge cases
 ```
@@ -23,7 +23,7 @@ The skill merges the **current branch (source)** into a **target branch** the us
 3. **Available branches check** — discover branches available for merge (local + remote, not yet merged).
 4. **Show branch list** — present a numbered, selectable list to the user.
 5. **Execute merge** — once the user selects a branch, attempt the merge.
-6. **Direct invocation** — support `/aqs-git-merge <from-branch> -> <into-branch>`.
+6. **Direct invocation** — support `/sas-git-merge <from-branch> -> <into-branch>`.
 7. **Conflict handling** — never auto-resolve; present the user with options including aborting the merge.
 
 ## Additional Considerations Added

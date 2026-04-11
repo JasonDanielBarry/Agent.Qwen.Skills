@@ -36,13 +36,13 @@ Agents.Skills/
 
 ## Naming Convention
 
-To avoid naming conflicts with Skills from other sources (personal, project-level, or third-party), all Skills in this repository must use the `aqs-` prefix:
+To avoid naming conflicts with Skills from other sources (personal, project-level, or third-party), all Skills in this repository must use the `sas-` prefix:
 
 ```
-aqs-<skill-name>
+sas-<skill-name>
 ```
 
-Examples: `aqs-pdf-tool`, `aqs-code-review`, `aqs-data-migration`
+Examples: `sas-pdf-tool`, `sas-code-review`, `sas-data-migration`
 
 This ensures clear scoping and prevents collisions when multiple Skill sources are active simultaneously.
 
@@ -51,7 +51,7 @@ This ensures clear scoping and prevents collisions when multiple Skill sources a
 1. Read the [Semantic Constraint Framework](./Semantic%20Constraint%20Framework.md) for the governing principles and artifact design rules
 2. Read the [Agent Skills Guide](./Agent%20Skills%20Guide.md) for universal concepts and best practices
 3. Read the [Qwen Code Implementation Notes](./Qwen%20Code%20Implementation%20Notes.md) for Qwen-specific details (paths, format, commands, model token budgets)
-4. Create a new folder using the `aqs-` prefix and kebab-case naming (e.g., `aqs-pdf-tool`)
+4. Create a new folder using the `sas-` prefix and kebab-case naming (e.g., `sas-pdf-tool`)
 5. Write a `SKILL.md` with YAML frontmatter and clear, step-by-step instructions — following the Semantic Constraint Framework's universal required sections
 6. Restart Qwen Code and test that the Skill activates on relevant prompts
 
@@ -86,18 +86,18 @@ The script will:
 
 Copy a skill folder manually:
 ```cmd
-xcopy /E /I /Y skills\aqs-endsession "%USERPROFILE%\.qwen\skills\aqs-endsession"
+xcopy /E /I /Y skills\sas-endsession "%USERPROFILE%\.qwen\skills\sas-endsession"
 ```
 
 ## Available Skills
 
 | Skill | Description |
 |---|---|
-| `aqs-endsession` | Save a session handoff note when wrapping up — captures what was done, where work left off, and what to tackle next, so the next session resumes instantly |
-| `aqs-reattach` | Read the latest session handoff note and restore context — surfaces accomplishments, stopping point, and next tasks; auto-creates a todo list |
-| `aqs-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — handles upstream setup, merge conflict warnings, and edge cases without asking permission |
-| `aqs-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, and offers post-merge actions |
-| `aqs-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification-first retrieval, conflict resolution, and lifecycle management |
+| `sas-endsession` | Save a session handoff note when wrapping up — captures what was done, where work left off, and what to tackle next, so the next session resumes instantly |
+| `sas-reattach` | Read the latest session handoff note and restore context — surfaces accomplishments, stopping point, and next tasks; auto-creates a todo list |
+| `sas-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — handles upstream setup, merge conflict warnings, and edge cases without asking permission |
+| `sas-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, and offers post-merge actions |
+| `sas-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification-first retrieval, conflict resolution, and lifecycle management |
 
 ## Management
 

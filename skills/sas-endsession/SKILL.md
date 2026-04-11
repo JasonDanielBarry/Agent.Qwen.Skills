@@ -1,9 +1,9 @@
 ---
-name: aqs-endsession
+name: sas-endsession
 description: Save a lightweight session handoff note so the next session can pick up where this one left off. Use when ending work, wrapping up, saving progress, logging work, or creating a handoff.
 ---
 
-# aqs-endsession
+# sas-endsession
 
 This skill enables seamless continuity between Qwen Code sessions by capturing a concise, structured summary of what was accomplished, where work concluded, and what should be tackled next. It eliminates context loss when sessions end, so the next session (or another agent) can resume immediately without re-reading conversation history or re-discovering the state of the codebase.
 

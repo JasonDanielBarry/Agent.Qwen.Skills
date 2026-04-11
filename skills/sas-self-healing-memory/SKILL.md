@@ -1,5 +1,5 @@
 ---
-name: aqs-self-healing-memory
+name: sas-self-healing-memory
 description: Maintain a structured, self-correcting memory system for AI agents. Use when the user wants persistent memory across sessions, memory consolidation, conflict resolution, knowledge management, or long-running project context.
 ---
 
@@ -14,7 +14,7 @@ This skill provides a structured, self-correcting memory system using file-based
 ## File Structure
 
 ```
-skills/aqs-self-healing-memory/
+skills/sas-self-healing-memory/
 ├── SKILL.md          ← This file (instructions)
 ├── MEMORY.md         ← Index (always loaded; ~150 char pointers)
 ├── topics/           ← Topic files (loaded on-demand)
@@ -156,7 +156,7 @@ If a correction later turns out to be wrong, the superseded section preserves th
 ## Retrieval Decision Tree
 
 **When to scan MEMORY.md:**
-- At session start (after `aqs-reattach` or when user describes a project)
+- At session start (after `sas-reattach` or when user describes a project)
 - Before starting a new task or feature
 - When the user asks about project context, architecture, or past decisions
 - When you're unsure about a pattern and want to check prior knowledge
@@ -229,8 +229,8 @@ If MEMORY.md is missing, corrupted, or empty:
 
 1. **Check for backups** — look in git history for the last known-good version:
    ```bash
-   git log --oneline -- skills/aqs-self-healing-memory/MEMORY.md
-   git show <commit>:skills/aqs-self-healing-memory/MEMORY.md
+   git log --oneline -- skills/sas-self-healing-memory/MEMORY.md
+   git show <commit>:skills/sas-self-healing-memory/MEMORY.md
    ```
 2. **If no backup exists** — rebuild from topic files:
    - Scan all topic files in `topics/`
@@ -293,14 +293,14 @@ Transcripts are **never loaded into context** — use `grep` only for historical
 
 ## Integration with Other Skills
 
-This skill is **complementary** to `aqs-endsession` and `aqs-reattach`:
+This skill is **complementary** to `sas-endsession` and `sas-reattach`:
 
-- **aqs-endsession/reattach** → handles session continuity (what was done, where left off, next steps)
+- **sas-endsession/reattach** → handles session continuity (what was done, where left off, next steps)
 - **self-healing-memory** → handles knowledge persistence and verification (facts, decisions, patterns)
 
 **Recommended workflow:**
-1. End session with `aqs-endsession` → saves handoff note
-2. Resume with `aqs-reattach` → restores session context
+1. End session with `sas-endsession` → saves handoff note
+2. Resume with `sas-reattach` → restores session context
 3. During work, use `self-healing-memory` → extracts non-derivable facts into topic files with provenance
 4. Transcripts log session-level actions for audit trail
 

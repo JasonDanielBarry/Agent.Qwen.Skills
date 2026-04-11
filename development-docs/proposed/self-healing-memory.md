@@ -250,7 +250,7 @@ Memory tagged with source, timestamp, version →
 ### 7.3 Proposed Skill Architecture
 
 ```
-skills/aqs-self-healing-memory/
+skills/sas-self-healing-memory/
 ├── SKILL.md                  # Instructions + write discipline rules
 ├── MEMORY.md                 # Index file (lightweight pointers)
 ├── topics/                   # Topic files (on-demand knowledge)
@@ -299,6 +299,6 @@ Self-healing memory is **feasible as a Qwen Code skill** with the following cons
 
 The skill would focus on **encoding the write discipline, verification rules, and conflict resolution patterns** into agent instructions, relying on the agent's own reasoning to maintain memory integrity rather than automated background processes.
 
-**Skill name:** `aqs-self-healing-memory` (follows `aqs-` prefix convention)
+**Skill name:** `sas-self-healing-memory` (follows `sas-` prefix convention)
 
-**Next step:** Draft the `aqs-self-healing-memory` skill based on this research.
+**Next step:** Draft the `sas-self-healing-memory` skill based on this research.

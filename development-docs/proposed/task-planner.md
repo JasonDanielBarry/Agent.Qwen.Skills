@@ -44,7 +44,7 @@ A skill that breaks down high-level requirements and features into actionable, s
 - Must integrate with Qwen Code's built-in todo_write tool
 - Should support task hierarchies (epics → tasks → subtasks)
 - Needs to handle both sequential and parallel task execution
-- Must persist task state across sessions (via aqs-endsession/aqs-reattach)
+- Must persist task state across sessions (via sas-endsession/sas-reattach)
 - Should link to external project management tools (Jira, Linear, GitHub Projects)
 - Must support task re-prioritization and scope changes
 - Should validate task completeness before marking features done

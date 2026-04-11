@@ -58,11 +58,11 @@ For the canonical folder structure of a single Skill, see [Folder Structure](./A
 
 | Skill | Description |
 |---|---|
-| `aqs-endsession` | Save a session handoff note when wrapping up — captures what was done, where work left off, and what to tackle next |
-| `aqs-reattach` | Read the latest session handoff note and restore context — auto-creates todo list from next steps |
-| `aqs-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — no permission prompts |
-| `aqs-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, offers post-merge actions |
-| `aqs-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification and conflict resolution |
+| `sas-endsession` | Save a session handoff note when wrapping up — captures what was done, where work left off, and what to tackle next |
+| `sas-reattach` | Read the latest session handoff note and restore context — auto-creates todo list from next steps |
+| `sas-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — no permission prompts |
+| `sas-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, offers post-merge actions |
+| `sas-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification and conflict resolution |
 
 ## Management
 
@@ -78,8 +78,8 @@ For detailed management and troubleshooting, see the [Qwen Code Implementation N
 
 ## Conventions
 
-- Use **kebab-case** for Skill folder names (e.g., `aqs-pdf-extraction`, `aqs-code-review`)
-- All Skills must use the `aqs-` prefix to avoid naming conflicts with other sources
+- Use **kebab-case** for Skill folder names (e.g., `sas-pdf-extraction`, `sas-code-review`)
+- All Skills must use the `sas-` prefix to avoid naming conflicts with other sources
 - Every Skill requires a `SKILL.md` with valid YAML frontmatter (`name` + `description`)
 - All Skills **must follow the Semantic Constraint Framework** — defining purpose, scope, inputs, outputs, constraints, invariants, failure modes, validation strategy, relationships, and guarantees
 - Keep Skills modular, self-contained, and focused on one capability

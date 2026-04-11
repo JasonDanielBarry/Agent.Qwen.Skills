@@ -1,6 +1,6 @@
 # Memory Index
 
-> Managed by the `aqs-self-healing-memory` skill.
+> Managed by the `sas-self-healing-memory` skill.
 > Each entry is ~150 characters max. Tags enable efficient search.
 > For full conventions, see SKILL.md.
 

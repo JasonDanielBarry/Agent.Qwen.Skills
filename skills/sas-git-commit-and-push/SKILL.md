@@ -1,5 +1,5 @@
 ---
-name: aqs-git-commit-and-push
+name: sas-git-commit-and-push
 description: Commit all changes using conventional commit messages and push to remote. Use when the user asks to commit and push, or when work is ready to be saved and shared.
 ---
 

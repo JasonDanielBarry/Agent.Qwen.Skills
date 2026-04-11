@@ -3,13 +3,13 @@
 > **Branch:** `feature/skill-self-healing-memory`
 > **Based on research:** `development-docs/proposed/self-healing-memory.md`
 > **Date:** 10 April 2026
-> **Skill name:** `aqs-self-healing-memory` (follows `aqs-` prefix convention)
+> **Skill name:** `sas-self-healing-memory` (follows `sas-` prefix convention)
 
 ---
 
 ## Objective
 
-Create a Qwen Code skill (`aqs-self-healing-memory`) that enables AI agents to maintain a structured, self-correcting memory system using file-based storage. The skill encodes write discipline, verification-first retrieval, and conflict resolution patterns into agent instructions.
+Create a Qwen Code skill (`sas-self-healing-memory`) that enables AI agents to maintain a structured, self-correcting memory system using file-based storage. The skill encodes write discipline, verification-first retrieval, and conflict resolution patterns into agent instructions.
 
 ---
 
@@ -60,7 +60,7 @@ skills/self-healing-memory/
 **Frontmatter:**
 ```yaml
 ---
-name: aqs-self-healing-memory
+name: sas-self-healing-memory
 description: Maintain a structured, self-correcting memory system for AI agents.
   Use when the user wants persistent memory across sessions, memory consolidation,
   conflict resolution, or knowledge management for long-running projects.
@@ -293,16 +293,16 @@ Ensure the new skill directory is included if the installer enumerates skills.
 
 ### 11. Integration with Existing Skills
 
-Clarify relationship with `aqs-endsession`:
+Clarify relationship with `sas-endsession`:
 
 | Skill | Purpose | Overlap | Integration |
 |---|---|---|---|
-| **aqs-endsession** | Save session handoff note for next session to resume | Captures what was done, where work left off, next steps | Writes a session note; does NOT maintain long-term knowledge |
+| **sas-endsession** | Save session handoff note for next session to resume | Captures what was done, where work left off, next steps | Writes a session note; does NOT maintain long-term knowledge |
 | **self-healing-memory** | Maintain persistent, verifiable knowledge across sessions | Could capture session insights too | **Complementary:** `endsession` writes handoff → `self-healing-memory` extracts non-derivable facts from handoff into topic files |
 
 **Recommended workflow:**
-1. User wraps up session → triggers `aqs-endsession`
-2. Next session starts → `aqs-reattach` reads handoff
+1. User wraps up session → triggers `sas-endsession`
+2. Next session starts → `sas-reattach` reads handoff
 3. During work, `self-healing-memory` extracts facts/decisions into topic files with provenance
 4. Transcripts log session-level actions for audit trail
 
@@ -313,7 +313,7 @@ These skills are complementary — `endsession`/`reattach` handles **session con
 ## Deliverables (Updated)
 
 ```
-skills/aqs-self-healing-memory/
+skills/sas-self-healing-memory/
 ├── SKILL.md                      # Skill definition + agent instructions
 ├── MEMORY.md                     # Index file (starter template)
 ├── topics/
@@ -371,7 +371,7 @@ Plus project-level updates:
 | Transcripts grow unbounded | Low | Low | Date-based rotation (one file per day); old files naturally infrequently accessed |
 | Agent creates too many topic files | Low | Medium | Index limits topics; guidance in _README.md on when to merge topics |
 | Superseded section bloats topic file | Medium | Medium | Consolidation session moves old superseded entries to archive or deletes |
-| Conflict with aqs-endsession skill | Low | Low | Clear integration notes in SKILL.md; complementary roles defined |
+| Conflict with sas-endsession skill | Low | Low | Clear integration notes in SKILL.md; complementary roles defined |
 | Agent skips provenance fields | Medium | High | Template examples in _README.md always include provenance; SKILL.md requires it |
 
 ---
@@ -392,4 +392,4 @@ Plus project-level updates:
 
 ## Next Step
 
-Begin implementation: create `skills/aqs-self-healing-memory/` directory and all deliverables.
+Begin implementation: create `skills/sas-self-healing-memory/` directory and all deliverables.

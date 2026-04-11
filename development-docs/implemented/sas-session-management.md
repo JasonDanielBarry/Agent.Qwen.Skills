@@ -1,11 +1,11 @@
-# Implementation Plan: aqs-endsession & aqs-reattach Skills
+# Implementation Plan: sas-endsession & sas-reattach Skills
 
 ## Overview
 
 Two lightweight skills for session handoff between separate Qwen Code interactions:
 
-- **aqs-endsession**: Writes a brief note of what was done, where the session stopped, and where to pick up
-- **aqs-reattach**: Reads the latest note so the agent can continue from where the last session left off
+- **sas-endsession**: Writes a brief note of what was done, where the session stopped, and where to pick up
+- **sas-reattach**: Reads the latest note so the agent can continue from where the last session left off
 
 **Design principle**: Lite handoff only. Not full context restoration.
 
@@ -62,11 +62,11 @@ These may be added later but are **not** in v1:
 
 ## 2. Skill Specifications
 
-### 2.1 aqs-endsession
+### 2.1 sas-endsession
 
 **Purpose**: Save a session handoff note before ending work.
 
-**Trigger**: `/skills aqs-endsession` or prompts like "end session", "save session", "wrap up".
+**Trigger**: `/skills sas-endsession` or prompts like "end session", "save session", "wrap up".
 
 **Steps**:
 
@@ -84,26 +84,26 @@ These may be added later but are **not** in v1:
 
 ---
 
-### 2.2 aqs-reattach
+### 2.2 sas-reattach
 
 **Purpose**: Load the latest session handoff note and pick up from where the last session stopped.
 
-**Trigger**: `/skills aqs-reattach` or prompts like "reattach", "continue from last session", "restore session".
+**Trigger**: `/skills sas-reattach` or prompts like "reattach", "continue from last session", "restore session".
 
 **Note**: This skill must be invoked from a **repository root** (a directory containing `.git`). If called from a subdirectory, it displays an error and exits.
 
 **Steps**:
 
-1. **Validate the current directory** — if the current directory does not contain `.git`, display an error and exit: "aqs-reattach must be run from a repository root (a directory containing `.git`). You are currently in a subdirectory. Navigate to the repo root and try again." If `.git` is present, use the current directory as the workspace root.
+1. **Validate the current directory** — if the current directory does not contain `.git`, display an error and exit: "sas-reattach must be run from a repository root (a directory containing `.git`). You are currently in a subdirectory. Navigate to the repo root and try again." If `.git` is present, use the current directory as the workspace root.
 
 2. **Scope by repo** — compare the current working directory against `repo_path` values in `.sessions/` file frontmatter (normalize both to forward slashes). Filter to only files whose `repo_path` matches the current directory **exactly**. If no match is found, fall back to scanning all files and display a warning: "No session reports found for this workspace. Showing the most recent report from another workspace."
 
 3. **Find the latest report** — scan `.sessions/` for `session-*.md` files (filtered per step 2). Parse each filename for its timestamp. For files where the timestamp parses, compare by timestamp. For files where it doesn't parse, fall back to file modification time. Pick the overall most recent file by whichever method applies.
 
-4. **If no report found** — if `.sessions/` doesn't exist, tell the user: "No `.sessions/` directory found. Run aqs-endsession first to save your session state." If `.sessions/` exists but contains no `session-*.md` files, tell the user: "`.sessions/` exists but no session reports found. Run aqs-endsession first to save your session state."
+4. **If no report found** — if `.sessions/` doesn't exist, tell the user: "No `.sessions/` directory found. Run sas-endsession first to save your session state." If `.sessions/` exists but contains no `session-*.md` files, tell the user: "`.sessions/` exists but no session reports found. Run sas-endsession first to save your session state."
 
 5. **Read the report** and validate its content:
-   - If the file is empty or has invalid YAML frontmatter, skip it and try the next most recent file. If no valid file remains, tell the user: "No valid session report found. Run aqs-endsession first."
+   - If the file is empty or has invalid YAML frontmatter, skip it and try the next most recent file. If no valid file remains, tell the user: "No valid session report found. Run sas-endsession first."
    - Extract content under each of the 3 section headers (`## What Was Done`, `## Where the Session Left Off`, `## Where to Pick Up Next`). Ignore any content outside these sections.
    - If any of the 3 sections are missing, report which ones are absent. Continue with available sections. If `## Where to Pick Up Next` is missing, skip todo list creation (see step 8).
 
@@ -128,13 +128,13 @@ These may be added later but are **not** in v1:
 
 ## 3. SKILL.md Files
 
-### 3.1 aqs-endsession
+### 3.1 sas-endsession
 
-**Folder**: `aqs-endsession/SKILL.md`
+**Folder**: `sas-endsession/SKILL.md`
 
 ```yaml
 ---
-name: aqs-endsession
+name: sas-endsession
 description: Save a lightweight session handoff note so the next session can pick up where this one left off. Use when ending work, wrapping up, saving progress, logging work, or creating a handoff.
 ---
 ```
@@ -154,25 +154,25 @@ description: Save a lightweight session handoff note so the next session can pic
 
 ---
 
-### 3.2 aqs-reattach
+### 3.2 sas-reattach
 
-**Folder**: `aqs-reattach/SKILL.md`
+**Folder**: `sas-reattach/SKILL.md`
 
 ```yaml
 ---
-name: aqs-reattach
+name: sas-reattach
 description: Read the latest session handoff note and pick up where the previous session left off. Use when resuming work, continuing a session, restoring context, or asking what you were working on.
 ---
 ```
 
 **Instructions**:
 
-1. Validate the current directory: if it does not contain `.git`, error and exit: "aqs-reattach must be run from a repository root."
+1. Validate the current directory: if it does not contain `.git`, error and exit: "sas-reattach must be run from a repository root."
 2. Determine the workspace root: use the current directory (it contains `.git`).
 3. Scope by repo: compare the current working directory against `repo_path` values in `.sessions/` file frontmatter (normalize to forward slashes). Filter to files whose `repo_path` matches the current directory **exactly**. If no match, fall back to all files with warning: "No session reports for this workspace. Showing most recent from another workspace."
 4. Find the most recent `session-*.md` in `.sessions/` (filtered per step 3). Parse each filename for its timestamp. For files where the timestamp parses, compare by timestamp. For files where it doesn't parse, fall back to file modification time. Pick the overall most recent file.
-5. If `.sessions/` doesn't exist: "No `.sessions/` directory found. Run aqs-endsession first." If it exists but is empty: "`.sessions/` exists but no session reports found. Run aqs-endsession first."
-6. Read the selected file. If it's empty or has invalid YAML, skip it and try the next most recent file. If no valid file remains: "No valid session report found. Run aqs-endsession first."
+5. If `.sessions/` doesn't exist: "No `.sessions/` directory found. Run sas-endsession first." If it exists but is empty: "`.sessions/` exists but no session reports found. Run sas-endsession first."
+6. Read the selected file. If it's empty or has invalid YAML, skip it and try the next most recent file. If no valid file remains: "No valid session report found. Run sas-endsession first."
 7. Extract content under each of the 3 section headers. Ignore content outside these sections. If any section is missing, report it. If `## Where to Pick Up Next` is missing, skip todo creation (see step 10).
 8. Ignore any frontmatter fields beyond `session_date` and `repo_path`.
 9. Compare `repo_path` from frontmatter with current working directory (normalize to forward slashes):

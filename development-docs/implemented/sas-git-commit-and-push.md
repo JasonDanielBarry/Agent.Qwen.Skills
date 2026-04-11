@@ -1,8 +1,8 @@
-# aqs-git-commit-and-push — Implemented
+# sas-git-commit-and-push — Implemented
 
 ## Skill Location
 
-`skills/aqs-git-commit-and-push/`
+`skills/sas-git-commit-and-push/`
 
 ## Description
 
