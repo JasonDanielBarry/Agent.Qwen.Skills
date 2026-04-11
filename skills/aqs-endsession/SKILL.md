@@ -9,6 +9,12 @@ This skill enables seamless continuity between Qwen Code sessions by capturing a
 
 **Note:** This skill writes the session report directly without asking for user confirmation beforehand. The agent drafts the summary from conversation context and saves it immediately. After writing, the agent shows the user the file path and a brief preview, and can apply adjustments if requested.
 
+## Git Rules — `.sessions/` Must Be Tracked
+
+- The `.sessions/` directory and its `session-*.md` files **MUST be tracked in git**.
+- **Never** add `.sessions/` to `.gitignore`. These files are shared team knowledge, not local-only artifacts.
+- When committing changes, include `.sessions/` files alongside other changes as part of the same commit.
+
 ## Instructions
 
 1. **Determine the workspace root:**

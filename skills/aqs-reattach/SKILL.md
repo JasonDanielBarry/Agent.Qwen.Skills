@@ -9,6 +9,12 @@ This skill restores working context instantly when resuming a Qwen Code session 
 
 **Note:** This skill must be invoked from a **repository root** (a directory containing `.git`). It will not work from subdirectories.
 
+## Git Rules — `.sessions/` Must Be Tracked
+
+- The `.sessions/` directory and its `session-*.md` files **MUST be tracked in git**.
+- **Never** add `.sessions/` to `.gitignore`. These files are shared team knowledge, not local-only artifacts.
+- When committing changes, include `.sessions/` files alongside other changes as part of the same commit.
+
 ## Instructions
 
 1. **Validate the current directory:**
