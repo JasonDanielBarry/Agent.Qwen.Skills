@@ -36,6 +36,190 @@ If a mistake is harmless, structure is optional. If a mistake is expensive (data
 
 ---
 
+## How to Write Constraints Effectively
+
+Use **declarative language**, not suggestions.
+
+✅ Prefer: `must`, `must not`, `required`, `forbidden`, `guaranteed`
+❌ Avoid: `try to`, `ideally`, `if possible`, `approximately`
+
+Constraints are instructions to the AI's reasoning engine.
+
+### Make Uncertainty Explicit
+If something is not decided:
+
+- Do not guess
+- Do not imply defaults
+- Do not leave it implicit
+
+Instead, write:
+
+> "This is currently unspecified and must be decided before use."
+
+Explicit uncertainty is still semantic signal.
+
+---
+
+## Constraint Language Standardization
+
+A formal grammar for expressing constraints unambiguously, enabling automated validation and conflict detection.
+
+### Formal Constraint Grammar
+
+```
+CONSTRAINT := MODALITY SUBJECT PREDICATE [SCOPE] [TEMPORAL]
+
+MODALITY := "must" | "must not" | "may" | "shall" | "shall not"
+
+SUBJECT := noun phrase identifying the constrained entity
+  Examples: "the agent", "the output", "the file", "the errors array"
+
+PREDICATE := verb phrase describing the required or prohibited behavior
+  Examples: "return a valid ExtractionResult", "modify the source file",
+            "prompt the user for a password"
+
+SCOPE := "for" noun phrase            (optional — limits applicability)
+  Examples: "for files larger than 50 MB", "for encrypted PDFs",
+            "for the EXECUTION phase"
+
+TEMPORAL := "always"                  (optional — when the constraint applies)
+          | "once"
+          | "during" phase-name
+          | "before" event
+          | "after" event
+  Examples: "always", "once per session", "during the REVIEW phase",
+            "before writing to disk", "after parsing completes"
+```
+
+**Default values:**
+- If SCOPE is omitted: the constraint applies globally (to all uses of the artifact).
+- If TEMPORAL is omitted: the constraint applies always (for invariants) or at the time of the governed action (for constraints).
+
+### Constraint Types
+
+| Type | Form | Purpose | Example |
+|------|------|---------|---------|
+| **Prohibitive** | `must not` + SUBJECT + PREDICATE | Blocks behavior | "The agent must not modify the source PDF file." |
+| **Mandatory** | `must` + SUBJECT + PREDICATE | Requires behavior | "The output must include an errors array." |
+| **Permissive** | `may` + SUBJECT + PREDICATE | Grants permission (overrides default prohibition) | "The agent may skip table extraction when the user requests text only." |
+| **Conditional** | `must` + SUBJECT + PREDICATE + `when` + CONDITION | Requirement triggered by condition | "The agent must prompt for a password when the PDF is encrypted." |
+
+### Constraint Scope Expressions
+
+| Scope Type | Syntax | Applies To |
+|-----------|--------|-----------|
+| Global | (no scope clause) | All uses of the artifact |
+| File-specific | `for <path-pattern>` | Only matching files, e.g., `for *.pdf` |
+| Type-specific | `for <type>` | Only artifacts of a given type, e.g., `for encrypted PDFs` |
+| Phase-specific | `during <phase>` | Only during a named lifecycle phase, e.g., `during EXECUTION` |
+
+### Constraint Temporal Behavior
+
+| Temporal | Meaning | Default For |
+|----------|---------|-------------|
+| `always` | Holds at all times during and after execution | Invariants |
+| `once` | Must be satisfied at least once during execution | Setup constraints, initialization requirements |
+| `during <phase>` | Holds only during a named phase | Phase-specific constraints |
+| `before <event>` | Must be satisfied prior to the named event | Preconditions, prerequisites |
+| `after <event>` | Must be satisfied following the named event | Postconditions, cleanup requirements |
+
+### Examples in the Formal Grammar
+
+```
+must the output include an errors array                              [Mandatory, Global, always]
+must not the agent modify the source file                             [Prohibitive, Global, always]
+must the agent prompt for a password when the PDF is encrypted       [Conditional, Global, always]
+must the agent use streaming for files > 50 MB for large files       [Mandatory, File-specific, always]
+must all VFs pass before returning output to user                    [Mandatory, Global, before return]
+may the agent skip OCR during EXECUTION when OCR is unavailable       [Permissive, Phase-specific, during EXECUTION]
+```
+
+---
+
+## Constraint Sufficiency
+
+When is an artifact constrained enough? The sufficiency test determines the stopping point.
+
+### The Constraint Sufficiency Test
+
+An artifact passes the sufficiency test when ALL three conditions are met:
+
+1. **Path Coverage:** For every execution path the artifact governs, at least one applicable constraint exists.
+   - Method: enumerate all execution paths from the artifact's Scope and Inputs sections. For each path, identify at least one constraint that applies.
+
+2. **Failure Coverage:** For every failure mode listed in the artifact, at least one constraint addresses it.
+   - Method: for each Failure Mode, identify at least one constraint that prevents, detects, or governs the recovery behavior.
+
+3. **Input Coverage:** For every input field, the artifact declares: required/optional status, expected format, and a validation rule.
+   - Method: for each input in the Inputs section, verify all three declarations are present.
+
+If any condition fails, the artifact is under-constrained and must be revised before use.
+
+### Minimum Constraint Density Guidelines
+
+These are baseline guidelines, not hard limits. The Sufficiency Test is the final arbiter.
+
+| Artifact Type | Minimum Constraints | Maximum Constraints | Notes |
+|--------------|-------------------|-------------------|-------|
+| Plans | 5 | 25 | Plans govern what will be built — they need constraints on scope, data, architecture, and behavior. |
+| Skills | 8 | 30 | Skills govern agent behavior — they need constraints on invocation, forbidden actions, phase separation, and outputs. |
+| Tool Definitions | 3 per tool | 15 per tool | Each tool needs at minimum: precondition, postcondition, side-effect declaration. |
+| Memory Notes | 2 | 10 | Memory notes need constraints on scope and freshness at minimum. |
+| Prompts & Templates | 3 | 15 | Prompts need constraints on role definition, output format, and forbidden behavior. |
+| Session Handoffs | 2 | 10 | Handoffs need constraints on completeness (no placeholders) and actionability (next steps must be specific). |
+
+**Below minimum:** artifact is almost certainly under-constrained. Add constraints.
+**Above maximum:** artifact may be too large. Consider splitting (see Artifact Granularity Guidelines).
+
+### Self-Check Protocol
+
+Before declaring an artifact complete, run this self-check:
+
+1. **List every thing that could go wrong** for this artifact's domain. Write them as risks: "The agent might...", "The input could be...", "The output might..."
+2. **For each risk, identify which constraint addresses it.** Write the constraint reference (section, number).
+3. **Any risk with no addressing constraint → add a constraint.** This is the primary mechanism for achieving sufficiency.
+4. **Any constraint that addresses no risk → remove it.** Dead constraints add noise without value.
+5. **Repeat steps 1-4** until every risk is covered and every constraint is necessary.
+
+This protocol converges because each iteration either adds a necessary constraint or removes a dead one, both of which move the artifact toward sufficiency.
+
+---
+
+## Section Depth Guidance
+
+Each of the 10 universal sections has a target depth. This prevents one-line summaries that miss critical detail and paragraphs of prose that waste context window.
+
+### Min/Max Guidance per Section
+
+| Section | Minimum | Maximum | What "Complete" Looks Like |
+|---------|---------|---------|---------------------------|
+| **Purpose** | 1 sentence | 3 sentences | The single reason the artifact exists is unambiguously stated. A reader can answer "why does this exist?" without reading further. |
+| **Scope** | 1 sentence naming both in-scope and out-of-scope | 1 paragraph | Both what is covered and what is excluded are explicitly named. No implied scope. |
+| **Inputs** | 1 item with name, type, format, precondition | 10 items | Every declared input has all four declarations. No input is referenced only in prose. |
+| **Outputs** | 1 item with name, type, format, postcondition | 10 items | Every declared output has all four declarations. Error outputs are declared alongside success outputs. |
+| **Constraints** | 3 rules | 20 rules | Each rule is declarative ("must"/"must not"), testable, and scoped. Each rule addresses at least one identified risk (see Sufficiency Test). |
+| **Invariants** | 1 rule | 10 rules | Each invariant holds across ALL execution paths. Each invariant is independently testable. No invariant is redundant with a constraint. |
+| **Failure Modes** | 1 mode with trigger, behavior, recovery | 10 modes | Each mode has all three components. Error paths are as well-defined as success paths. No "unknown" or "other" catch-all. |
+| **Validation Strategy** | 1 method referencing a VF or equivalent | 5 methods | Each method is specific enough to execute. Coverage is defined. Report format and escalation are declared. |
+| **Relationships** | 0 (may state "none") | 10 references | Each reference names the artifact, direction (depends on / depended by), and the nature of the dependency. |
+| **Guarantees** | 1 guarantee | 10 guarantees | Each guarantee is a postcondition that can be verified after execution. No guarantee restates an invariant. |
+
+### When to Expand vs. Keep Minimal
+
+**Expand a section when:**
+- The section governs a complex domain with many moving parts
+- There are known failure modes or edge cases in this area
+- The artifact is high-cost per the Cost Rule (mistakes here are expensive)
+- Prior constraint violations have occurred in this area
+
+**Keep minimal when:**
+- The domain is simple and well-understood
+- The artifact is low-cost per the Cost Rule (mistakes here are cheap)
+- The section is self-evident (e.g., "Relationships: none" for a standalone artifact)
+- Additional detail would restate what is already declared elsewhere in the artifact
+
+---
+
 ## Proven Techniques for Constraining Probabilistic Behavior
 
 Research and production experience have identified several techniques that reliably constrain LLM behavior:
@@ -92,30 +276,6 @@ Apply this checklist when designing any semantic artifact:
 
 ---
 
-## How to Write Constraints Effectively
-
-Use **declarative language**, not suggestions.
-
-✅ Prefer: `must`, `must not`, `required`, `forbidden`, `guaranteed`
-❌ Avoid: `try to`, `ideally`, `if possible`, `approximately`
-
-Constraints are instructions to the AI's reasoning engine.
-
-### Make Uncertainty Explicit
-If something is not decided:
-
-- Do not guess
-- Do not imply defaults
-- Do not leave it implicit
-
-Instead, write:
-
-> "This is currently unspecified and must be decided before use."
-
-Explicit uncertainty is still semantic signal.
-
----
-
 ## Universal Artifact Design
 
 ### When an Artifact Needs Semantic Discipline
@@ -143,6 +303,44 @@ Every semantic artifact **must** define:
 10. **Guarantees** — postconditions the artifact commits to
 
 Type-specific sections are added on top of this universal base.
+
+---
+
+## Artifact Granularity Guidelines
+
+Artifacts that are too large overwhelm context windows. Artifacts that are too small fragment knowledge.
+
+### Maximum Size Guidelines
+
+| Metric | Soft Limit | Hard Limit | Action |
+|--------|-----------|------------|--------|
+| Token count | 1,500 tokens (~1,000 words) | 3,000 tokens (~2,000 words) | Above hard limit: must split |
+| Section count | 15 sections | 25 sections | Above hard limit: must split |
+| Constraint count | 15 constraints | 25 constraints | Above hard limit: must split |
+
+Soft limits are warnings — the artifact should be reviewed for splitting. Hard limits are rules — the artifact must be split before use.
+
+### Splitting Criteria
+
+Split one artifact into two when ANY of these conditions are met:
+
+1. **Distinct domains:** The artifact governs two or more distinct subsystems or domains that could be owned independently.
+   - Example: a Skill that handles both PDF extraction and spreadsheet generation should be two Skills.
+2. **Constraint overload:** The artifact has more than 15 constraints (see Constraint Sufficiency maximums).
+3. **Section overload:** The artifact has more than 5 type-specific sections in addition to the 10 universal sections.
+4. **Ownership split:** Different teams, agents, or roles own different parts of the artifact.
+5. **Context pressure:** The artifact is loaded into context alongside other artifacts and the combined token count approaches the model's limit.
+
+### Merging Criteria
+
+Merge two artifacts into one when ALL of these conditions are met:
+
+1. **Domain overlap:** Both artifacts govern the same domain and share more than 50% of their constraint subject matter.
+2. **Small size:** Both artifacts are under 400 tokens (~270 words) each.
+3. **Co-use:** Both artifacts are always loaded together (the agent uses them in the same workflow every time).
+4. **Cross-reference density:** Cross-references between the two artifacts exceed 3 bidirectional references.
+
+**Never merge artifacts solely to reduce file count.** Merging must improve clarity, not reduce it.
 
 ---
 
@@ -332,6 +530,193 @@ Semantic structure alone is insufficient — violations must be detectable and c
 - Type-specific rules (listed above) must be satisfied
 - Artifacts referencing other artifacts must resolve all references
 
+### Verification Functions
+
+VFs are the mechanism for deterministic validation of artifact outputs.
+
+#### Python VF Standard Format
+
+Every Python VF follows this signature and return type:
+
+```python
+from dataclasses import dataclass
+from typing import Any
+
+@dataclass
+class VFResult:
+    passed: bool       # True if the VF passes, False otherwise
+    reason: str        # Human-readable explanation of pass or failure
+    details: dict      # Structured diagnostic details (optional fields, always present)
+
+def verify_<subtask_name>(output: Any, context: dict) -> VFResult:
+    """
+    Validate the output of <subtask>.
+
+    Args:
+        output: The output to validate (type depends on subtask).
+        context: Dictionary with execution context (inputs, artifact references, previous failures).
+
+    Returns:
+        VFResult with pass/fail status, reason, and diagnostics.
+
+    Never raises exceptions — always returns a VFResult.
+    """
+    try:
+        # Validation logic
+        if <condition>:
+            return VFResult(passed=True, reason="Description of what passed", details={})
+        else:
+            return VFResult(
+                passed=False,
+                reason="Expected X, got Y",
+                details={"expected": X, "actual": Y, "field": "name"}
+            )
+    except Exception as e:
+        return VFResult(
+            passed=False,
+            reason=f"VF execution error: {e}",
+            details={"error_type": type(e).__name__, "error": str(e)}
+        )
+```
+
+**Rules for Python VFs:**
+- Must never raise exceptions — always return `VFResult`.
+- Must be self-contained — no external dependencies beyond the Python standard library (unless explicitly declared in `context`).
+- Must report precise diagnostics — `"failed"` is not sufficient; `"expected string, got None"` is.
+- Must handle unexpected input gracefully — the `try/except` wrapper is mandatory.
+
+#### Natural Language VF Standard Format
+
+Natural Language VFs are structured prompts for LLM-based validation:
+
+```markdown
+## VF: <subtask_name>
+
+**Input Reference:** <what output or artifact is being evaluated>
+
+**Evaluation Criteria:**
+1. <binary criterion 1> — PASS if X is present, FAIL otherwise.
+2. <binary criterion 2> — PASS if Y matches Z, FAIL otherwise.
+3. ...
+
+**Pass/Fail Reporting Format:**
+- PASS: "<brief reason>"
+- FAIL: "<brief reason> — expected <X>, got <Y>"
+
+**All criteria must pass (logical AND).** Report the first failure encountered.
+```
+
+**Rules for Natural Language VFs:**
+- Every criterion must be binary — no partial credit, no "mostly correct."
+- The evaluation must produce a clear PASS or FAIL verdict.
+- The first failure is reported — evaluation stops at the first FAIL (short-circuit AND).
+
+#### VF Execution Protocol
+
+1. **Run all VFs** defined for the subtask.
+2. **Aggregate results** with logical AND — all must pass.
+3. **On failure:**
+   a. Log precise diagnostics from the failing VF(s).
+   b. Retry the subtask with updated context including the failure diagnostics (max 3 attempts).
+   c. If still failing after 3 retries: replan the subtask.
+4. **On replan failure:** escalate to human operator with structured report:
+   ```
+   VF FAILURE after retry and replan:
+   - Subtask: <name>
+   - VF: <name>
+   - Attempts: 3 retries + 1 replan
+   - Last failure: <reason>
+   - Diagnostics: <details>
+   ```
+
+#### VF Failure Handling Summary
+
+| Stage | Action |
+|-------|--------|
+| First failure | Retry subtask with failure diagnostics appended to context |
+| After 3 retries | Replan subtask — rewrite definition, update VFs if they were too strict |
+| After replan failure | Escalate to human — do not retry again |
+
+### Validation Strategy Specification
+
+The Validation Strategy section must define how the artifact's correctness is verified — not merely list checks.
+
+#### Validation Strategy Templates per Artifact Type
+
+Each artifact type has a standard validation profile:
+
+**Plans:**
+- Structural validation: all 10 universal sections present and non-empty, all type-specific sections present
+- Constraint validation: all constraints use declarative language, Constraint Sufficiency Test passes
+- Guarantee validation: all guarantees are testable postconditions, no guarantee restates an invariant
+- Reference resolution: all artifact references resolve to existing artifacts
+
+**Skills:**
+- Invocation condition validation: conditions are specific and testable (not "when the user asks about PDFs")
+- Phase separation validation: declared phases are valid (PLAN, CODE, REVIEW, REVISE), no prohibited bypasses
+- Constraint validation: same as Plans
+- Forbidden usage validation: all prohibitions are specific (not "don't do bad things")
+
+**Tool Definitions:**
+- Signature validation: all parameters have names, types, required/optional status
+- Side-effect declaration validation: all external state modifications are declared
+- Idempotency check: idempotency status is declared and consistent with side-effect declaration
+- Error behavior declaration: error behavior (throw, return code, retry) is declared
+
+**Memory Notes:**
+- Freshness validation: `session_date` or equivalent timestamp is present and parseable
+- Conflict resolution validation: no contradictions with higher-authority artifacts (see Artifact-to-Artifact Conflict Resolution)
+- Scope validation: memory scope is declared (global, project, session)
+
+**Prompts & Templates:**
+- KERNEL compliance: all 6 KERNEL principles are satisfied
+- Placeholder validation: all variable content uses recognized placeholder markers (`{{input}}`, `[variable]`)
+- Constraint block validation: forbidden behaviors are explicitly listed
+
+#### Minimum Validation Coverage
+
+| Requirement | Coverage |
+|-------------|----------|
+| Every constraint must have at least one validation method | 100% constraint coverage |
+| Every invariant must be independently verifiable | 100% invariant coverage |
+| Every failure mode must have a detection method | 100% failure mode coverage |
+| Every output must have a validation criterion | 100% output coverage |
+
+#### Validation Report Format
+
+Every validation produces a structured report:
+
+```
+VALIDATION REPORT
+=================
+Artifact: <name>
+Version: <framework_version>
+Validator: <agent name or human name>
+Timestamp: <ISO 8601>
+
+SECTION RESULTS:
+- Purpose:          PASS
+- Scope:            PASS
+- Inputs:           PASS
+- Outputs:          PASS
+- Constraints:      PASS (N constraints, all declarative, sufficiency test passed)
+- Invariants:       PASS (N invariants, all testable)
+- Failure Modes:    PASS (N modes, all with trigger+behavior+recovery)
+- Validation:       PASS (N methods, all coverage requirements met)
+- Relationships:    PASS
+- Guarantees:       PASS
+
+VERDICT: PASS / FAIL / PASS_WITH_WARNINGS
+```
+
+#### Escalation Protocol
+
+| Verdict | Action |
+|---------|--------|
+| **PASS** | No action required. Artifact is ready for use. |
+| **PASS_WITH_WARNINGS** | Artifact may be used. Warnings must be addressed at next edit cycle. Warnings are non-blocking issues (e.g., constraint at soft limit, section nearing maximum depth). |
+| **FAIL** | Artifact must NOT be used. Block until revision. Each failing section is listed with specific remediation instructions. |
+
 ### Runtime Enforcement
 - Verification Functions (VFs) execute after each subtask — all must pass (logical AND)
 - On VF failure: precise diagnostics → retry with updated context (max 3) → replan if still failing
@@ -346,61 +731,7 @@ Semantic structure alone is insufficient — violations must be detectable and c
 
 ---
 
-## Human vs AI Optimization Dial
-
-### Human-Optimized Artifacts
-- Explanatory prose
-- Friendly narrative
-- Justification and context
-- Designed for onboarding
-
-### AI-Optimized Artifacts
-- Minimal prose
-- Dense constraints
-- Explicit guarantees
-- Zero ambiguity
-
-Same meaning, different surface. Control the dial intentionally.
-
----
-
-## Why Markdown Works (for Now)
-
-Markdown is effective because it is:
-- Textual
-- Diffable
-- Versionable
-- Tool‑agnostic
-- LLM‑friendly
-
-Markdown is acting as a **proto‑semantic language carrier**. Over time, syntax may formalize — structure should not change.
-
----
-
-## How This Improves AI Behavior
-
-Semantic artifacts:
-- Freeze interpretation early
-- Reduce degrees of freedom
-- Anchor reasoning
-- Increase self-consistency pressure
-- Make violations detectable
-
-This produces:
-- Higher repeatability
-- Fewer "creative" deviations
-- Safer regeneration
-- More trustworthy automation
-
----
-
-## Completed Extensions — What Was Added
-
-The 10 gaps identified in the original framework have been filled. Each section below is now part of the active framework. The worked examples are maintained separately in [examples/worked-examples.md](./examples/worked-examples.md).
-
----
-
-## 1. Constraint Conflict Resolution Rules
+## Constraint Conflict Resolution
 
 When two constraints within the same artifact contradict, the agent must detect and resolve the conflict before proceeding.
 
@@ -445,7 +776,7 @@ When a conflict cannot be resolved by the algorithm above:
 
 ---
 
-## 2. Artifact-to-Artifact Conflict Resolution
+## Artifact-to-Artifact Conflict Resolution
 
 When constraints in different artifacts contradict, resolution follows an authority hierarchy and detection protocol.
 
@@ -490,7 +821,7 @@ Cross-artifact conflicts must be detected before execution begins:
 
 ---
 
-## 3. Versioning & Migration Strategy
+## Versioning & Migration Strategy
 
 Artifacts drift as the framework evolves. Versioning and migration ensure consistency.
 
@@ -547,392 +878,51 @@ Agents must report staleness status when loading an artifact:
 
 ---
 
-## 4. Verification Function (VF) Specification
+## Human vs AI Optimization Dial
 
-VFs are the mechanism for deterministic validation of artifact outputs.
+### Human-Optimized Artifacts
+- Explanatory prose
+- Friendly narrative
+- Justification and context
+- Designed for onboarding
 
-### Python VF Standard Format
+### AI-Optimized Artifacts
+- Minimal prose
+- Dense constraints
+- Explicit guarantees
+- Zero ambiguity
 
-Every Python VF follows this signature and return type:
-
-```python
-from dataclasses import dataclass
-from typing import Any
-
-@dataclass
-class VFResult:
-    passed: bool       # True if the VF passes, False otherwise
-    reason: str        # Human-readable explanation of pass or failure
-    details: dict      # Structured diagnostic details (optional fields, always present)
-
-def verify_<subtask_name>(output: Any, context: dict) -> VFResult:
-    """
-    Validate the output of <subtask>.
-    
-    Args:
-        output: The output to validate (type depends on subtask).
-        context: Dictionary with execution context (inputs, artifact references, previous failures).
-    
-    Returns:
-        VFResult with pass/fail status, reason, and diagnostics.
-    
-    Never raises exceptions — always returns a VFResult.
-    """
-    try:
-        # Validation logic
-        if <condition>:
-            return VFResult(passed=True, reason="Description of what passed", details={})
-        else:
-            return VFResult(
-                passed=False,
-                reason="Expected X, got Y",
-                details={"expected": X, "actual": Y, "field": "name"}
-            )
-    except Exception as e:
-        return VFResult(
-            passed=False,
-            reason=f"VF execution error: {e}",
-            details={"error_type": type(e).__name__, "error": str(e)}
-        )
-```
-
-**Rules for Python VFs:**
-- Must never raise exceptions — always return `VFResult`.
-- Must be self-contained — no external dependencies beyond the Python standard library (unless explicitly declared in `context`).
-- Must report precise diagnostics — `"failed"` is not sufficient; `"expected string, got None"` is.
-- Must handle unexpected input gracefully — the `try/except` wrapper is mandatory.
-
-### Natural Language VF Standard Format
-
-Natural Language VFs are structured prompts for LLM-based validation:
-
-```markdown
-## VF: <subtask_name>
-
-**Input Reference:** <what output or artifact is being evaluated>
-
-**Evaluation Criteria:**
-1. <binary criterion 1> — PASS if X is present, FAIL otherwise.
-2. <binary criterion 2> — PASS if Y matches Z, FAIL otherwise.
-3. ...
-
-**Pass/Fail Reporting Format:**
-- PASS: "<brief reason>"
-- FAIL: "<brief reason> — expected <X>, got <Y>"
-
-**All criteria must pass (logical AND).** Report the first failure encountered.
-```
-
-**Rules for Natural Language VFs:**
-- Every criterion must be binary — no partial credit, no "mostly correct."
-- The evaluation must produce a clear PASS or FAIL verdict.
-- The first failure is reported — evaluation stops at the first FAIL (short-circuit AND).
-
-### VF Execution Protocol
-
-1. **Run all VFs** defined for the subtask.
-2. **Aggregate results** with logical AND — all must pass.
-3. **On failure:**
-   a. Log precise diagnostics from the failing VF(s).
-   b. Retry the subtask with updated context including the failure diagnostics (max 3 attempts).
-   c. If still failing after 3 retries: replan the subtask.
-4. **On replan failure:** escalate to human operator with structured report:
-   ```
-   VF FAILURE after retry and replan:
-   - Subtask: <name>
-   - VF: <name>
-   - Attempts: 3 retries + 1 replan
-   - Last failure: <reason>
-   - Diagnostics: <details>
-   ```
-
-### VF Failure Handling Summary
-
-| Stage | Action |
-|-------|--------|
-| First failure | Retry subtask with failure diagnostics appended to context |
-| After 3 retries | Replan subtask — rewrite definition, update VFs if they were too strict |
-| After replan failure | Escalate to human — do not retry again |
+Same meaning, different surface. Control the dial intentionally.
 
 ---
 
-## 5. Constraint Sufficiency
+## Why Markdown Works (for Now)
 
-When is an artifact constrained enough? The sufficiency test determines the stopping point.
+Markdown is effective because it is:
+- Textual
+- Diffable
+- Versionable
+- Tool‑agnostic
+- LLM‑friendly
 
-### The Constraint Sufficiency Test
-
-An artifact passes the sufficiency test when ALL three conditions are met:
-
-1. **Path Coverage:** For every execution path the artifact governs, at least one applicable constraint exists.
-   - Method: enumerate all execution paths from the artifact's Scope and Inputs sections. For each path, identify at least one constraint that applies.
-   
-2. **Failure Coverage:** For every failure mode listed in the artifact, at least one constraint addresses it.
-   - Method: for each Failure Mode, identify at least one constraint that prevents, detects, or governs the recovery behavior.
-   
-3. **Input Coverage:** For every input field, the artifact declares: required/optional status, expected format, and a validation rule.
-   - Method: for each input in the Inputs section, verify all three declarations are present.
-
-If any condition fails, the artifact is under-constrained and must be revised before use.
-
-### Minimum Constraint Density Guidelines
-
-These are baseline guidelines, not hard limits. The Sufficiency Test is the final arbiter.
-
-| Artifact Type | Minimum Constraints | Maximum Constraints | Notes |
-|--------------|-------------------|-------------------|-------|
-| Plans | 5 | 25 | Plans govern what will be built — they need constraints on scope, data, architecture, and behavior. |
-| Skills | 8 | 30 | Skills govern agent behavior — they need constraints on invocation, forbidden actions, phase separation, and outputs. |
-| Tool Definitions | 3 per tool | 15 per tool | Each tool needs at minimum: precondition, postcondition, side-effect declaration. |
-| Memory Notes | 2 | 10 | Memory notes need constraints on scope and freshness at minimum. |
-| Prompts & Templates | 3 | 15 | Prompts need constraints on role definition, output format, and forbidden behavior. |
-| Session Handoffs | 2 | 10 | Handoffs need constraints on completeness (no placeholders) and actionability (next steps must be specific). |
-
-**Below minimum:** artifact is almost certainly under-constrained. Add constraints.
-**Above maximum:** artifact may be too large. Consider splitting (see Artifact Granularity Guidelines).
-
-### Self-Check Protocol
-
-Before declaring an artifact complete, run this self-check:
-
-1. **List every thing that could go wrong** for this artifact's domain. Write them as risks: "The agent might...", "The input could be...", "The output might..."
-2. **For each risk, identify which constraint addresses it.** Write the constraint reference (section, number).
-3. **Any risk with no addressing constraint → add a constraint.** This is the primary mechanism for achieving sufficiency.
-4. **Any constraint that addresses no risk → remove it.** Dead constraints add noise without value.
-5. **Repeat steps 1-4** until every risk is covered and every constraint is necessary.
-
-This protocol converges because each iteration either adds a necessary constraint or removes a dead one, both of which move the artifact toward sufficiency.
+Markdown is acting as a **proto‑semantic language carrier**. Over time, syntax may formalize — structure should not change.
 
 ---
 
-## 6. Artifact Granularity Guidelines
+## How This Improves AI Behavior
 
-Artifacts that are too large overwhelm context windows. Artifacts that are too small fragment knowledge.
+Semantic artifacts:
+- Freeze interpretation early
+- Reduce degrees of freedom
+- Anchor reasoning
+- Increase self-consistency pressure
+- Make violations detectable
 
-### Maximum Size Guidelines
-
-| Metric | Soft Limit | Hard Limit | Action |
-|--------|-----------|------------|--------|
-| Token count | 1,500 tokens (~1,000 words) | 3,000 tokens (~2,000 words) | Above hard limit: must split |
-| Section count | 15 sections | 25 sections | Above hard limit: must split |
-| Constraint count | 15 constraints | 25 constraints | Above hard limit: must split |
-
-Soft limits are warnings — the artifact should be reviewed for splitting. Hard limits are rules — the artifact must be split before use.
-
-### Splitting Criteria
-
-Split one artifact into two when ANY of these conditions are met:
-
-1. **Distinct domains:** The artifact governs two or more distinct subsystems or domains that could be owned independently.
-   - Example: a Skill that handles both PDF extraction and spreadsheet generation should be two Skills.
-2. **Constraint overload:** The artifact has more than 15 constraints (see Constraint Sufficiency maximums).
-3. **Section overload:** The artifact has more than 5 type-specific sections in addition to the 10 universal sections.
-4. **Ownership split:** Different teams, agents, or roles own different parts of the artifact.
-5. **Context pressure:** The artifact is loaded into context alongside other artifacts and the combined token count approaches the model's limit.
-
-### Merging Criteria
-
-Merge two artifacts into one when ALL of these conditions are met:
-
-1. **Domain overlap:** Both artifacts govern the same domain and share more than 50% of their constraint subject matter.
-2. **Small size:** Both artifacts are under 400 tokens (~270 words) each.
-3. **Co-use:** Both artifacts are always loaded together (the agent uses them in the same workflow every time).
-4. **Cross-reference density:** Cross-references between the two artifacts exceed 3 bidirectional references.
-
-**Never merge artifacts solely to reduce file count.** Merging must improve clarity, not reduce it.
-
----
-
-## 7. Section Depth Guidance
-
-Each of the 10 universal sections has a target depth. This prevents one-line summaries that miss critical detail and paragraphs of prose that waste context window.
-
-### Min/Max Guidance per Section
-
-| Section | Minimum | Maximum | What "Complete" Looks Like |
-|---------|---------|---------|---------------------------|
-| **Purpose** | 1 sentence | 3 sentences | The single reason the artifact exists is unambiguously stated. A reader can answer "why does this exist?" without reading further. |
-| **Scope** | 1 sentence naming both in-scope and out-of-scope | 1 paragraph | Both what is covered and what is excluded are explicitly named. No implied scope. |
-| **Inputs** | 1 item with name, type, format, precondition | 10 items | Every declared input has all four declarations. No input is referenced only in prose. |
-| **Outputs** | 1 item with name, type, format, postcondition | 10 items | Every declared output has all four declarations. Error outputs are declared alongside success outputs. |
-| **Constraints** | 3 rules | 20 rules | Each rule is declarative ("must"/"must not"), testable, and scoped. Each rule addresses at least one identified risk (see Sufficiency Test). |
-| **Invariants** | 1 rule | 10 rules | Each invariant holds across ALL execution paths. Each invariant is independently testable. No invariant is redundant with a constraint. |
-| **Failure Modes** | 1 mode with trigger, behavior, recovery | 10 modes | Each mode has all three components. Error paths are as well-defined as success paths. No "unknown" or "other" catch-all. |
-| **Validation Strategy** | 1 method referencing a VF or equivalent | 5 methods | Each method is specific enough to execute. Coverage is defined. Report format and escalation are declared. |
-| **Relationships** | 0 (may state "none") | 10 references | Each reference names the artifact, direction (depends on / depended by), and the nature of the dependency. |
-| **Guarantees** | 1 guarantee | 10 guarantees | Each guarantee is a postcondition that can be verified after execution. No guarantee restates an invariant. |
-
-### When to Expand vs. Keep Minimal
-
-**Expand a section when:**
-- The section governs a complex domain with many moving parts
-- There are known failure modes or edge cases in this area
-- The artifact is high-cost per the Cost Rule (mistakes here are expensive)
-- Prior constraint violations have occurred in this area
-
-**Keep minimal when:**
-- The domain is simple and well-understood
-- The artifact is low-cost per the Cost Rule (mistakes here are cheap)
-- The section is self-evident (e.g., "Relationships: none" for a standalone artifact)
-- Additional detail would restate what is already declared elsewhere in the artifact
-
----
-
-## 8. Validation Strategy Specification
-
-The Validation Strategy section must define how the artifact's correctness is verified — not merely list checks.
-
-### Validation Strategy Templates per Artifact Type
-
-Each artifact type has a standard validation profile:
-
-**Plans:**
-- Structural validation: all 10 universal sections present and non-empty, all type-specific sections present
-- Constraint validation: all constraints use declarative language, Constraint Sufficiency Test passes
-- Guarantee validation: all guarantees are testable postconditions, no guarantee restates an invariant
-- Reference resolution: all artifact references resolve to existing artifacts
-
-**Skills:**
-- Invocation condition validation: conditions are specific and testable (not "when the user asks about PDFs")
-- Phase separation validation: declared phases are valid (PLAN, CODE, REVIEW, REVISE), no prohibited bypasses
-- Constraint validation: same as Plans
-- Forbidden usage validation: all prohibitions are specific (not "don't do bad things")
-
-**Tool Definitions:**
-- Signature validation: all parameters have names, types, required/optional status
-- Side-effect declaration validation: all external state modifications are declared
-- Idempotency check: idempotency status is declared and consistent with side-effect declaration
-- Error behavior declaration: error behavior (throw, return code, retry) is declared
-
-**Memory Notes:**
-- Freshness validation: `session_date` or equivalent timestamp is present and parseable
-- Conflict resolution validation: no contradictions with higher-authority artifacts (see Artifact-to-Artifact Conflict Resolution)
-- Scope validation: memory scope is declared (global, project, session)
-
-**Prompts & Templates:**
-- KERNEL compliance: all 6 KERNEL principles are satisfied
-- Placeholder validation: all variable content uses recognized placeholder markers (`{{input}}`, `[variable]`)
-- Constraint block validation: forbidden behaviors are explicitly listed
-
-### Minimum Validation Coverage
-
-| Requirement | Coverage |
-|-------------|----------|
-| Every constraint must have at least one validation method | 100% constraint coverage |
-| Every invariant must be independently verifiable | 100% invariant coverage |
-| Every failure mode must have a detection method | 100% failure mode coverage |
-| Every output must have a validation criterion | 100% output coverage |
-
-### Validation Report Format
-
-Every validation produces a structured report:
-
-```
-VALIDATION REPORT
-=================
-Artifact: <name>
-Version: <framework_version>
-Validator: <agent name or human name>
-Timestamp: <ISO 8601>
-
-SECTION RESULTS:
-- Purpose:          PASS
-- Scope:            PASS
-- Inputs:           PASS
-- Outputs:          PASS
-- Constraints:      PASS (N constraints, all declarative, sufficiency test passed)
-- Invariants:       PASS (N invariants, all testable)
-- Failure Modes:    PASS (N modes, all with trigger+behavior+recovery)
-- Validation:       PASS (N methods, all coverage requirements met)
-- Relationships:    PASS
-- Guarantees:       PASS
-
-VERDICT: PASS / FAIL / PASS_WITH_WARNINGS
-```
-
-### Escalation Protocol
-
-| Verdict | Action |
-|---------|--------|
-| **PASS** | No action required. Artifact is ready for use. |
-| **PASS_WITH_WARNINGS** | Artifact may be used. Warnings must be addressed at next edit cycle. Warnings are non-blocking issues (e.g., constraint at soft limit, section nearing maximum depth). |
-| **FAIL** | Artifact must NOT be used. Block until revision. Each failing section is listed with specific remediation instructions. |
-
----
-
-## 9. Constraint Language Standardization
-
-A formal grammar for expressing constraints unambiguously, enabling automated validation and conflict detection.
-
-### Formal Constraint Grammar
-
-```
-CONSTRAINT := MODALITY SUBJECT PREDICATE [SCOPE] [TEMPORAL]
-
-MODALITY := "must" | "must not" | "may" | "shall" | "shall not"
-
-SUBJECT := noun phrase identifying the constrained entity
-  Examples: "the agent", "the output", "the file", "the errors array"
-
-PREDICATE := verb phrase describing the required or prohibited behavior
-  Examples: "return a valid ExtractionResult", "modify the source file",
-            "prompt the user for a password"
-
-SCOPE := "for" noun phrase            (optional — limits applicability)
-  Examples: "for files larger than 50 MB", "for encrypted PDFs",
-            "for the EXECUTION phase"
-
-TEMPORAL := "always"                  (optional — when the constraint applies)
-          | "once"
-          | "during" phase-name
-          | "before" event
-          | "after" event
-  Examples: "always", "once per session", "during the REVIEW phase",
-            "before writing to disk", "after parsing completes"
-```
-
-**Default values:**
-- If SCOPE is omitted: the constraint applies globally (to all uses of the artifact).
-- If TEMPORAL is omitted: the constraint applies always (for invariants) or at the time of the governed action (for constraints).
-
-### Constraint Types
-
-| Type | Form | Purpose | Example |
-|------|------|---------|---------|
-| **Prohibitive** | `must not` + SUBJECT + PREDICATE | Blocks behavior | "The agent must not modify the source PDF file." |
-| **Mandatory** | `must` + SUBJECT + PREDICATE | Requires behavior | "The output must include an errors array." |
-| **Permissive** | `may` + SUBJECT + PREDICATE | Grants permission (overrides default prohibition) | "The agent may skip table extraction when the user requests text only." |
-| **Conditional** | `must` + SUBJECT + PREDICATE + `when` + CONDITION | Requirement triggered by condition | "The agent must prompt for a password when the PDF is encrypted." |
-
-### Constraint Scope Expressions
-
-| Scope Type | Syntax | Applies To |
-|-----------|--------|-----------|
-| Global | (no scope clause) | All uses of the artifact |
-| File-specific | `for <path-pattern>` | Only matching files, e.g., `for *.pdf` |
-| Type-specific | `for <type>` | Only artifacts of a given type, e.g., `for encrypted PDFs` |
-| Phase-specific | `during <phase>` | Only during a named lifecycle phase, e.g., `during EXECUTION` |
-
-### Constraint Temporal Behavior
-
-| Temporal | Meaning | Default For |
-|----------|---------|-------------|
-| `always` | Holds at all times during and after execution | Invariants |
-| `once` | Must be satisfied at least once during execution | Setup constraints, initialization requirements |
-| `during <phase>` | Holds only during a named phase | Phase-specific constraints |
-| `before <event>` | Must be satisfied prior to the named event | Preconditions, prerequisites |
-| `after <event>` | Must be satisfied following the named event | Postconditions, cleanup requirements |
-
-### Examples in the Formal Grammar
-
-```
-must the output include an errors array                              [Mandatory, Global, always]
-must not the agent modify the source file                             [Prohibitive, Global, always]
-must the agent prompt for a password when the PDF is encrypted       [Conditional, Global, always]
-must the agent use streaming for files > 50 MB for large files       [Mandatory, File-specific, always]
-must all VFs pass before returning output to user                    [Mandatory, Global, before return]
-may the agent skip OCR during EXECUTION when OCR is unavailable       [Permissive, Phase-specific, during EXECUTION]
-```
+This produces:
+- Higher repeatability
+- Fewer "creative" deviations
+- Safer regeneration
+- More trustworthy automation
 
 ---
 
