@@ -226,7 +226,7 @@ Add helper scripts the agent can execute, or templates it can fill in.
 
 ### This Project's Standard: Semantic Constraint Framework
 
-While the concepts in this guide are universal, **all Skills in this repository must conform to the [Semantic Constraint Framework](./Semantic%20Constraint%20Framework.md)** — a structured methodology for constraining probabilistic AI behavior into reliably deterministic outcomes.
+While the concepts in this guide are universal, **all Skills in this repository must conform to the [Semantic Constraint Framework](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md)** — a structured methodology for constraining probabilistic AI behavior into reliably deterministic outcomes.
 
 The framework defines:
 - **10 universal required sections** every semantic artifact must include (Purpose, Scope, Inputs, Outputs, Constraints, Invariants, Failure Modes, Validation Strategy, Relationships, Guarantees)
@@ -248,7 +248,7 @@ Before deploying a Skill, confirm each item:
 - [ ] Instructions are step-by-step, not vague prose
 - [ ] No hardcoded paths, secrets, or environment-specific values
 - [ ] All referenced files (reference docs, scripts, templates) exist in the Skill folder
-- [ ] **Conforms to the [Semantic Constraint Framework](./Semantic%20Constraint%20Framework.md)** — all universal required sections present, type-specific sections satisfied
+- [ ] **Conforms to the [Semantic Constraint Framework](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md)** — all universal required sections present, type-specific sections satisfied
 - [ ] Agent restarts and loads the Skill when prompted with description keywords
 - [ ] Skill folder name matches the `name` in metadata
 - [ ] Scripts handle missing dependencies gracefully

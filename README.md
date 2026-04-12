@@ -6,13 +6,13 @@ A repository of custom Agent Skills for Qwen Code — all adhering to the **Sema
 
 This repository contains custom Skills — modular capabilities that extend Qwen Code's effectiveness for specific tasks. Each Skill packages instructions, scripts, templates, and reference material into a self-contained folder that the agent can discover and invoke autonomously.
 
-Every Skill in this repository **adheres to the [Semantic Constraint Framework](./Semantic%20Constraint%20Framework.md)** — a system of structured artifacts that constrain probabilistic AI behavior into reliably deterministic outcomes. Skills define explicit purpose, scope, inputs, outputs, constraints, invariants, failure modes, validation strategy, relationships, and guarantees.
+Every Skill in this repository **adheres to the [Semantic Constraint Framework](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md)** — a system of structured artifacts that constrain probabilistic AI behavior into reliably deterministic outcomes. Skills define explicit purpose, scope, inputs, outputs, constraints, invariants, failure modes, validation strategy, relationships, and guarantees.
 
 ## Documentation
 
 | Document | Scope | Covers |
 |---|---|---|
-| [Semantic Constraint Framework.md](./Semantic%20Constraint%20Framework.md) | **Governing framework** | Techniques, artifact catalog (plans, skills, tools, memory, prompts, tests, etc.), validation rules, enforcement procedures, feedback loops |
+| [Semantic Constraint Framework.md](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md) | **Governing framework** | Techniques, artifact catalog (plans, skills, tools, memory, prompts, tests, etc.), validation rules, enforcement procedures, feedback loops |
 | [Agent Skills Guide.md](./Agent%20Skills%20Guide.md) | **Agent-agnostic** | What Skills are, design principles, best practices, security, token budget, versioning, lifecycle, testing methodology, distribution, agent design patterns |
 | [Qwen Code Implementation Notes.md](./Qwen%20Code%20Implementation%20Notes.md) | **Qwen Code-specific** | Discovery paths, `SKILL.md` format, complete example, invocation commands, token budget by model, extension Skills, git workflow, debugging, edge cases |
 
@@ -28,6 +28,8 @@ Agents.Skills/
 │   ├── examples.md        ← Optional: usage examples
 │   ├── scripts/           ← Optional: helper scripts
 │   └── templates/         ← Optional: starter templates
+├── semantic-constraint-framework/
+│   └── Semantic Constraint Framework.md  ← Governing framework
 ├── README.md              ← This file
 ├── QWEN.md                ← Agent context for this directory
 ├── Agent Skills Guide.md  ← Agent-agnostic research guide
@@ -48,7 +50,7 @@ This ensures clear scoping and prevents collisions when multiple Skill sources a
 
 ## Getting Started
 
-1. Read the [Semantic Constraint Framework](./Semantic%20Constraint%20Framework.md) for the governing principles and artifact design rules
+1. Read the [Semantic Constraint Framework](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md) for the governing principles and artifact design rules
 2. Read the [Agent Skills Guide](./Agent%20Skills%20Guide.md) for universal concepts and best practices
 3. Read the [Qwen Code Implementation Notes](./Qwen%20Code%20Implementation%20Notes.md) for Qwen-specific details (paths, format, commands, model token budgets)
 4. Create a new folder using the `sas-` prefix and kebab-case naming (e.g., `sas-pdf-tool`)
