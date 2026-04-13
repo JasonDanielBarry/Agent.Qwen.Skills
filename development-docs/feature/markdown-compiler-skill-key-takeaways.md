@@ -278,7 +278,7 @@ Source (.human.md)
 
 Modeled after C/C++ preprocessor.
 
-**Temporary preprocessing document:** Created during preprocessing with expanded macros, included files, and annotations for conflict detection/filler identification. Aids the compilation phase. **MUST be deleted after successful compilation.**
+**Preprocessing output:** Created during preprocessing with expanded macros, included files, and annotations for conflict detection/filler identification. Aids the compilation phase. **Persisted permanently** in the `.DocName.compilation/stage-1-preprocessor/` folder for auditability and error diagnosis. Not deleted after compilation.
 
 **Conflict detection:** Conflicts, contradictions, or ambiguities → document **MUST NOT compile**, user **MUST be alerted** to resolve.
 
@@ -409,7 +409,7 @@ Each stage receives the previous stage's output as its sole input. No stage read
 | [6] Code Generation | `GEN_001` | Output path not writable |
 | | `GEN_002` | Template rendering failure |
 
-**Error propagation:** Any error → pipeline halts immediately. Error displayed with stage name, code, human-readable description, and source location (line number from DST metadata). Temporary preprocessing document cleaned up on error. No partial output written. User must fix source and retry.
+**Error propagation:** Any error → pipeline halts immediately. Error displayed with stage name, code, human-readable description, and source location (line number from DST metadata). All intermediate files up to the point of failure are retained in the `.DocName.compilation/` folder for diagnosis. No partial output written to final destination. User must fix source and retry.
 
 ### Preprocessor Phase
 

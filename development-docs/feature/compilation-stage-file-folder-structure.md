@@ -244,7 +244,7 @@ After:
 - Adding cross-reference links between sections
 - Deduplicating units with identical content
 
-**Note:** For production runs where per-pass debugging is not needed, only `ir-pass-3.json` (the final state) is required. A `--debug-passes` flag can be added later to emit all three. During bootstrap phases (v0.1–v1.0), keeping all three is recommended for development.
+**Design decision:** All three pass files are permanently retained. Each pass represents a distinct transformation with a clear input/output contract, and preserving all three provides a complete audit trail — you can diff pass-1 vs pass-2 to see exactly what tagging and prioritization added, or pass-2 vs pass-3 to see what cross-reference resolution changed. This aligns with the broader principle of trusting file persistence over context memory: if you need to understand why the optimizer produced a certain result, the intermediate files are always available for inspection.
 
 ---
 
