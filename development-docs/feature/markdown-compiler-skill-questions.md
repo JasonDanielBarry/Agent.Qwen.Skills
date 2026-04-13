@@ -363,7 +363,7 @@ An AI agent can be used to verify that the compiled output preserves all essenti
 ---
 
 ### 40. Should the skill include examples in its SKILL.md showing before/after transformations so users understand what to expect?
-**Answer:**  
+**Answer:**
 This can be documented in the skill **README.md**.
 
 The skill that executes the compilation will itself be **COMPILED**.
@@ -375,3 +375,93 @@ The same approach will be taken here:
 1. The initial version of the skill can be developed with a simple transformation process
 2. Once it is functional, it will be used to compile the skill itself
 3. This allows for more aggressive optimizations and transformations in subsequent iterations
+
+---
+
+### 41. Should the compilation pipeline replicate the C/C++ multi-stage architecture (preprocessing → AST → IR → optimization passes → code generation → linker)?
+**Answer:**
+**No — not 1:1.** The C++ pipeline exists to solve problems markdown doesn't have (complex type systems, memory layout, cross-file symbol resolution). Use a **6-stage streamlined pipeline** instead.
+
+#### What to Drop
+- **The Linker:** The preprocessor already handles `#include`-style document resolution before compilation. There is no separate "object file" stage.
+- **Full Traditional AST:** Markdown doesn't have scopes, type hierarchies, template instantiations, or memory lifetimes. Overkill.
+
+#### What to Keep (But Simplify)
+- **Document Structure Tree (DST)** instead of AST: A lightweight tree capturing headings, lists, tables, paragraphs, and semantic markers.
+- **Intermediate Representation (IR):** Crucial — separates "what this means" from "how it's written". Enables format swapping, IR validation, and composable optimization passes.
+
+#### Recommended 6-Stage Pipeline
+
+```
+Source (.human.md)
+   ↓
+[1] Preprocessor — macro expansion, file inclusion, conflict detection
+   ↓
+[2] Structural Parse (lightweight DST) — markdown → traversable tree of blocks
+   ↓
+[3] Semantic IR Extraction — flatten tree into semantic units, strip formatting
+   ↓
+[4] Optimization Passes — Pass 1: strip/compress, Pass 2: tag/structure, Pass 3: cross-reference/group
+   ↓
+[5] Semantic Constraint Injection — 10 universal sections, declarative language, KERNEL validation
+   ↓
+[6] Code Generation — emit target format, add traceability header + timestamp
+```
+
+**Conclusion:** Keep the stages that give determinism, debuggability, and composability. Cut the rest.
+
+⚠️ **Needs detailed stage specifications** — this answer works as a decision record but is insufficient for implementation. The following gaps must be filled before coding the compiler:
+
+| Gap | What's needed |
+|-----|--------------|
+| DST specification | Node types, attributes, traversal interface for the Document Structure Tree |
+| IR specification | Concrete data structure for "semantic units" — how instructions, constraints, facts map to IR nodes |
+| Per-stage I/O contracts | Explicit inputs/outputs — how stage N's output becomes stage N+1's input |
+| Optimization pass details | Concrete transformation rules, not just labels ("strip/compress", "tag/structure", etc.) |
+| Semantic Constraint Injection mapping | How are the 10 universal sections injected? Template fill? Structural reorganization? What if source lacks a section? |
+| Code generation mechanics | IR → output format process. Template-based? Rule-based? How does format choice affect generation? |
+| Per-stage error handling | What does "halt" look like at each stage? What error information gets surfaced? |
+
+---
+
+## Open Research Items
+
+*These questions remain unresolved. Each needs research, a decision, and an answer recorded below before the compiler can be fully implemented.*
+
+### R1. Structured Elements for AI Agents (relates to Q6, Q26)
+**Question:** What structured elements do AI agents find most useful? (e.g., XML tagging, JSON-LD, constraint-based formatting, priority markers)
+
+**Current status:** Undecided — requires research.
+
+**Answer:**
+<!-- TODO: Research and document results -->
+
+---
+
+### R2. Output Format (relates to Q7)
+**Question:** What format should the compiled output use? (JSON, YAML, custom markup, optimized markdown)
+
+**Current status:** Undecided — whatever format is most easily parsed by AI agents. May require research and experimentation.
+
+**Answer:**
+<!-- TODO: Research and document results -->
+
+---
+
+### R3. Validation Methodology (relates to Q13, Q14, Q15, Q31, Q39)
+**Question:** What specific validation checks should the post-compile routine perform? Structural checks are agreed upon as a starting point, but what does the functional equivalence test look like in practice?
+
+**Current status:** Agreed that agent-based verification is the approach (Q39), and that original + compiled must produce the same AI agent output (Q31). The exact test design and implementation details need to be worked out.
+
+**Answer:**
+<!-- TODO: Design and document the cheap functional equivalence test + separate expensive analysis skill -->
+
+---
+
+### R4. Filler vs. Context Distinction Rules (relates to Q25)
+**Question:** What are the specific, implementable rules for distinguishing "verbose filler" (safe to remove) from "contextual reasoning" (compress and preserve) during preprocessing?
+
+**Current status:** Agreed that preprocessing is the technique, but the concrete rules for classification need to be defined so the preprocessor can apply them deterministically.
+
+**Answer:**
+<!-- TODO: Define clear rules/heuristics for classifying content as filler vs. contextual reasoning -->

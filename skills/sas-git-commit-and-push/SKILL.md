@@ -9,6 +9,12 @@ description: Commit all changes using conventional commit messages and push to r
 
 This skill streamlines the process of saving and sharing work by autonomously staging, committing, and pushing without asking for user permission. The user invoking the skill has already given implicit consent by requesting the action. It ensures commits follow project conventions, handles edge cases cleanly, and keeps the working tree in a predictable state — reducing friction when users want to persist their changes.
 
+## Invariants — NEVER Violate These
+
+- **NEVER ask the user for permission, confirmation, or approval.** Do not present a draft commit message and ask "does this look good?" Do not ask "should I commit?" Do not ask "ready to push?" Stage, commit, and push directly.
+- **NEVER skip committing changes** because the diff is large, complex, or touches many files.
+- **NEVER leave the working tree dirty** after a successful commit + push (unless edge cases prevent it — see below).
+
 ## Instructions
 
 When invoked, this skill stages all changes, creates one or more conventional commits, and pushes to the remote repository. The working tree should be clean afterward.
