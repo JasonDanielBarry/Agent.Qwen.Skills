@@ -3,7 +3,7 @@ name: sas-semantic-compiler
 description: Compile markdown documents (.human.md) into AI-optimized output. Transforms human-readable markdown into machine-optimized form via a 6-stage pipeline with sub-agent isolation. Invokes compilation of skills, plans, and agent-directed documents.
 ---
 
-<!-- compiled from: skills/sas-semantic-compiler/SKILL.human.md | 2026-04-13T00:00:00Z -->
+<!-- compiled from: skills/sas-semantic-compiler/SKILL.human.md | 2026-04-13T10:30:00Z -->
 
 ## Purpose
 
@@ -13,7 +13,6 @@ Compile `.human.md` source documents into AI-optimized `.md` output via a 6-stag
 
 - Target: Skill files, implementation plans, markdown with instructions/guidelines/structured info for AI agents
 - Excluded: README files, human end-user documentation, human-consumption documents
-- Phase 1 limitations: Stages 1-3 fully implemented, Stage 4 Pass 1 only, Stage 5 basic section detection, Stage 6 simple markdown output (no XML tags)
 
 ## Inputs
 
@@ -67,11 +66,20 @@ Compile `.human.md` source documents into AI-optimized `.md` output via a 6-stag
 
 ## Validation Strategy
 
-- Verify all 10 universal sections present
-- Verify declarative language used (no "try to", "ideally", "if possible")
+### Tier 1 — Structural Check (automatic, fast, deterministic)
+
+- Verify all 10 universal sections present with XML-like tags
+- Verify all type-specific sections present (based on document type)
+- Verify declarative language used (scan for "try to", "ideally", "if possible", "approximately")
 - Verify negative constraints exist
+- Verify uncertainty explicitly declared (not left implicit)
 - Verify KERNEL framework compliance
 - Fail = compilation fails with specific missing-element errors
+
+### Tier 2 — Functional Equivalence Test (deferred to Phase 4)
+
+- Agent-based comparison of source vs compiled output on representative tasks
+- Threshold: 90%+ task equivalence across 5+ benchmark tasks
 
 ## Relationships
 
@@ -86,6 +94,43 @@ Compile `.human.md` source documents into AI-optimized `.md` output via a 6-stag
 - Same meaning, different surface — compiler controls human-to-AI optimization dial
 - All intermediate files permanently persisted for auditability and error diagnosis
 - Each phase produces a working, usable compiler
+
+---
+
+## Sub-Agent Execution Model
+
+**Invariant — Fresh sub-agent per stage/pass:** Each of the 6 pipeline stages and each of the 3 Stage 4 optimization passes MUST execute in a separate sub-agent. Reusing a single agent across multiple stages or passes is forbidden. Sub-agent termination (process exit) is the only mechanism that provides structural context isolation.
+
+### Execution Sequence (8 sub-agent invocations)
+
+| Execution Unit | Agent | Input | Output |
+|----------------|-------|-------|--------|
+| Stage 1 — Preprocessor | Agent 1 | Source `.human.md` file | `preprocessed.md` + `annotations.json` |
+| Stage 2 — Structural Parse | Agent 2 | Stage 1 output files | `dst.json` |
+| Stage 3 — Semantic IR Extraction | Agent 3 | Stage 2 output file | `ir.json` |
+| Stage 4 Pass 1 — Strip & Compress | Agent 4 | Stage 3 output file | `ir-pass-1.json` |
+| Stage 4 Pass 2 — Tag & Structure | Agent 5 | Pass 1 output file | `ir-pass-2.json` |
+| Stage 4 Pass 3 — Cross-Reference & Group | Agent 6 | Pass 2 output file | `ir-pass-3.json` |
+| Stage 5 — Semantic Constraint Injection | Agent 7 | Pass 3 output file | `ir-augmented.json` |
+| Stage 6 — Code Generation | Agent 8 | Stage 5 output file | `output-draft.md` |
+
+### Sub-Agent Lifecycle
+
+Every sub-agent follows: **Spawn → Load → Process → Write → Terminate**
+
+1. **Spawn** — parent agent creates a fresh sub-agent
+2. **Load** — sub-agent receives: (a) the compilation skill instructions (SKILL.md), and (b) the output files from the previous stage/pass on disk. Nothing else.
+3. **Process** — sub-agent performs its stage's transformation per the pipeline specification
+4. **Write** — sub-agent writes its output files to the `.DocName.compilation/` folder
+5. **Terminate** — sub-agent exits. Process destruction = guaranteed context destruction.
+
+### Zero Initial Context
+
+Before the first sub-agent spawns, the agent has zero context about the document being compiled, its content, or any compilation stage.
+
+### Sole Information Boundary
+
+The only information a sub-agent has about its stage is the output files from the previous stage loaded from disk. The sub-agent MUST NOT reference, recall, or infer content from any other stage's output.
 
 ---
 
@@ -118,8 +163,6 @@ Compile `.human.md` source documents into AI-optimized `.md` output via a 6-stag
 
 ### Stage 4 — Optimization Passes
 
-**Phase 1 scope: Pass 1 only**
-
 - Pass 1 — Strip & Compress:
   - Remove all `type: "filler"` IRUnits
   - Compress `type: "rationale"` units to `[rationale: X]`
@@ -128,23 +171,45 @@ Compile `.human.md` source documents into AI-optimized `.md` output via a 6-stag
   - Strip decorative formatting
   - Output: `ir-pass-1.json` → `stage-4-optimized/`
 
-- Pass 2 — Tag & Structure: **Deferred to Phase 2**
-- Pass 3 — Cross-Reference & Group: **Deferred to Phase 2**
+- Pass 2 — Tag & Structure:
+  - Assign explicit `id` to every IRUnit (`sec-{section}-{index}`)
+  - Add `priority`: P0 for constraints/invariants/negative constraints, P1 for instructions/failure modes, P2 for examples/relationships
+  - Convert conditional prose into explicit `Condition` objects (`{predicate, then, else}`)
+  - Mark negative constraints (`negation: true`)
+  - Wrap examples in generalized schema patterns
+  - Output: `ir-pass-2.json` → `stage-4-optimized/`
+
+- Pass 3 — Cross-Reference & Group:
+  - Resolve `references` by matching anchors/IDs to IRUnit IDs
+  - Group related IRUnits by semantic affinity (constraints with edge cases, instructions with failure modes)
+  - Add cross-reference links between sections
+  - Deduplicate IRUnits with identical content in same section
+  - Output: `ir-pass-3.json` → `stage-4-optimized/`
 
 ### Stage 5 — Semantic Constraint Injection
 
-- Phase 1: Basic section detection + placeholder injection for missing sections
 - Group IRUnits by `section` field into section map
-- For each of the 10 universal sections: if IRUnits exist → use; if none → inject placeholder: `<section_name> — This is currently unspecified and must be decided before use.`
-- Convert all content to declarative language
-- Ensure at least one negative constraint exists
+- For each of the 10 universal sections: if IRUnits exist → use and reorganize; if none → inject placeholder: `<section_name> — This is currently unspecified and must be decided before use.`
+- Add type-specific sections (Skill detection via `name:` + `description:` in frontmatter → Invocation Conditions, Forbidden Usage, Phase Separation)
+- Convert ALL content to declarative language (apply hedging resolution)
+- Ensure at least one negative constraint exists — if none detected, inject: "Do not guess or imply defaults for unspecified behavior."
+- Run KERNEL validation checklist against section map
 - Output: `ir-augmented.json` → `stage-5-constrained/`
 
 ### Stage 6 — Code Generation
 
-- Phase 1: Simple markdown output (no XML tags)
 - Emit traceability header: `<!-- compiled from: {source_path} | {timestamp} -->`
-- For each section: emit `## {Section Name}`, emit each IRUnit as bullet/prose
+- For each of the 10 universal sections (canonical order):
+  - Emit `## {Section Name}`
+  - Emit `<{section_tag}>` wrapper (e.g., `<purpose>`, `<constraints>`, `<invariants>`)
+  - Emit each IRUnit:
+    - Priority marker (`[P0]`) for P0 units
+    - Bullet for instructions/constraints
+    - Prose for facts/rationale
+    - `IF/THEN/ELSE` block if `conditions` present
+    - Negative framing if `negation: true`
+  - Emit `</{section_tag}>`
+- Emit type-specific sections the same way
 - Write to `{output_path}`
 - Output: `output-draft.md` → `stage-6-generated/`, then copied to final output path
 
@@ -203,6 +268,8 @@ Plus type-specific sections: Skills (Invocation Conditions, Forbidden Usage, Pha
 - Tag semantic roles
 - Flatten nested explanations into direct assertions
 - Resolve ambiguity: "might"/"could"/"should" → definitive directives
+- Group related constraints (even if scattered in source)
+- Add cross-references between sections using explicit anchors/IDs
 
 ---
 
@@ -274,16 +341,16 @@ X/
 
 ---
 
-## Phase 1 Limitations
+## Implementation Status
 
 | Feature | Status |
 |---------|--------|
-| Stage 1-3 full implementation | Implemented |
-| Stage 4 Pass 1 (strip filler) | Implemented |
-| Stage 4 Pass 2 (tagging, IF/THEN/ELSE) | Deferred Phase 2 |
-| Stage 4 Pass 3 (cross-reference resolution) | Deferred Phase 2 |
-| XML-like tag wrapping | Deferred Phase 2 |
-| Tier 1 structural validation | Deferred Phase 2 |
+| Stage 1-3 full implementation | Implemented (Phase 1) |
+| Stage 4 Pass 1 (strip filler) | Implemented (Phase 1) |
+| Stage 4 Pass 2 (tagging, IF/THEN/ELSE) | Implemented (Phase 2) |
+| Stage 4 Pass 3 (cross-reference resolution) | Implemented (Phase 2) |
+| XML-like tag wrapping | Implemented (Phase 2) |
+| Tier 1 structural validation | Implemented (Phase 2) |
 | Tier 2 functional equivalence | Deferred Phase 4 |
 | Self-compilation | Deferred Phase 3 |
 | Separate verification skill | Deferred Phase 4 |
