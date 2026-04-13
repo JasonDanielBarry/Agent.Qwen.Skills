@@ -62,6 +62,55 @@ Source (.human.md)
 
 ---
 
+## Sub-Agent Execution Model
+
+**Invariant — Fresh sub-agent per stage/pass:** Each of the 6 pipeline stages and each of the 3 Stage 4 optimization passes MUST execute in a separate sub-agent. Reusing a single agent across multiple stages or passes is forbidden. The overhead of spawning new agents (latency, initialization cost) is accepted — it is outweighed by the guarantee of fresh context isolation. Sub-agent termination (process exit) is the only mechanism that provides structural context isolation. Instruction-based "context clearing" is not a valid substitute.
+
+### Execution model
+
+The compilation pipeline runs as **9 discrete sub-agent invocations**:
+
+| Execution Unit | Agent | Input | Output |
+|----------------|-------|-------|--------|
+| Stage 1 — Preprocessor | Agent 1 | Source `.human.md` file | `preprocessed.md` + `annotations.json` |
+| Stage 2 — Structural Parse | Agent 2 | Stage 1 output files | `dst.json` |
+| Stage 3 — Semantic IR Extraction | Agent 3 | Stage 2 output file | `ir.json` |
+| Stage 4 Pass 1 — Strip & Compress | Agent 4 | Stage 3 output file | `ir-pass-1.json` |
+| Stage 4 Pass 2 — Tag & Structure | Agent 5 | Pass 1 output file | `ir-pass-2.json` |
+| Stage 4 Pass 3 — Cross-Reference & Group | Agent 6 | Pass 2 output file | `ir-pass-3.json` |
+| Stage 5 — Semantic Constraint Injection | Agent 7 | Pass 3 output file | `ir-augmented.json` |
+| Stage 6 — Code Generation | Agent 8 | Stage 5 output file | `output-draft.md` |
+
+### Sub-agent lifecycle
+
+Every sub-agent follows the same pattern:
+
+1. **Spawn** — parent agent creates a fresh sub-agent
+2. **Load** — sub-agent receives exactly two things: (a) the compilation skill instructions (SKILL.md), and (b) the output files from the previous stage/pass on disk. Nothing else.
+3. **Process** — sub-agent performs its stage's transformation per the pipeline specification
+4. **Write** — sub-agent writes its output files to the `.DocName.compilation/` folder
+5. **Terminate** — sub-agent exits. Process destruction = guaranteed context destruction. No residue, no memory, no carryover.
+
+### Zero initial context
+
+Before the first sub-agent spawns, the agent has zero context about the document being compiled, its content, or any compilation stage. No preloading. No assumptions. No prior knowledge.
+
+### Sole information boundary
+
+The only information a sub-agent has about its stage is the output files from the previous stage loaded from disk. The sub-agent MUST NOT reference, recall, or infer content from any other stage's output.
+
+### Why sub-agents, not one agent
+
+| Concern | Single agent across stages | Sub-agent per stage/pass |
+|---------|---------------------------|--------------------------|
+| Context residue | Inevitable — conversation history accumulates | Impossible — agent is destroyed after each stage |
+| Cross-stage contamination | Possible — agent may shortcut by referencing earlier representations | Structurally prevented — only current stage's inputs are available |
+| Error recovery | Must unwind accumulated reasoning state | Spawn fresh agent against same input files |
+| Determinism enforcement | Instruction-dependent ("please forget") | Structural guarantee (agent no longer exists) |
+| Determinism measurement | Cannot isolate per-stage output variance | Run two agents on same input, diff outputs |
+
+---
+
 ## Stage Specifications
 
 ### Stage 1 — Preprocessor

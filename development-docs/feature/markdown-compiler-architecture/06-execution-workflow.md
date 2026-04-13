@@ -1,67 +1,87 @@
 # 06 — Execution Workflow
 
-## Context Window Workflow
+## Sub-Agent Orchestration Model
 
-The agent follows a **load → process → write → clear** cycle for each stage:
+**Invariant — Fresh sub-agent per stage/pass:** Each of the 6 pipeline stages and each of the 3 Stage 4 optimization passes MUST execute in a separate sub-agent. Reusing a single agent across multiple stages or passes is forbidden. The overhead of spawning new agents (latency, initialization cost) is accepted — it is outweighed by the guarantee of fresh context isolation. Sub-agent termination (process exit) is the only mechanism that provides structural context isolation. Instruction-based "context clearing" is not a valid substitute.
+
+Each stage runs as: **spawn agent → load skill + previous stage's output files → process → write files → terminate agent.**
 
 ```
-1. Load compilation skill (SKILL.md) into context
-   Load source document path
+1. Spawn Agent 1 (Stage 1 — Preprocessor)
+   Load: compilation skill (SKILL.md) + source document
    Run Stage 1 → write stage-1-preprocessor/ files
-   Clear context
+   Terminate Agent 1 (context destroyed by process exit)
 
-2. Load compilation skill (SKILL.md) into context
-   Load stage-1-preprocessor/ output files
+2. Spawn Agent 2 (Stage 2 — Structural Parse)
+   Load: compilation skill (SKILL.md) + stage-1-preprocessor/ output files
    Run Stage 2 → write stage-2-dst/ files
-   Clear context
+   Terminate Agent 2
 
-3. Load compilation skill (SKILL.md) into context
-   Load stage-2-dst/ output files
+3. Spawn Agent 3 (Stage 3 — Semantic IR Extraction)
+   Load: compilation skill (SKILL.md) + stage-2-dst/ output files
    Run Stage 3 → write stage-3-ir/ files
-   Clear context
+   Terminate Agent 3
 
-4. Load compilation skill (SKILL.md) into context
-   Load stage-3-ir/ output files
-   Run Stage 4 (all 3 passes) → write stage-4-optimized/ files
-   Clear context
+4. Spawn Agent 4 (Stage 4 Pass 1 — Strip & Compress)
+   Load: compilation skill (SKILL.md) + stage-3-ir/ output files
+   Run Pass 1 → write stage-4-optimized/ir-pass-1.json
+   Terminate Agent 4
 
-5. Load compilation skill (SKILL.md) into context
-   Load stage-4-optimized/ output files
+5. Spawn Agent 5 (Stage 4 Pass 2 — Tag & Structure)
+   Load: compilation skill (SKILL.md) + stage-4-optimized/ir-pass-1.json
+   Run Pass 2 → write stage-4-optimized/ir-pass-2.json
+   Terminate Agent 5
+
+6. Spawn Agent 6 (Stage 4 Pass 3 — Cross-Reference & Group)
+   Load: compilation skill (SKILL.md) + stage-4-optimized/ir-pass-2.json
+   Run Pass 3 → write stage-4-optimized/ir-pass-3.json
+   Terminate Agent 6
+
+7. Spawn Agent 7 (Stage 5 — Semantic Constraint Injection)
+   Load: compilation skill (SKILL.md) + stage-4-optimized/ir-pass-3.json
    Run Stage 5 → write stage-5-constrained/ files
-   Clear context
+   Terminate Agent 7
 
-6. Load compilation skill (SKILL.md) into context
-   Load stage-5-constrained/ output files
+8. Spawn Agent 8 (Stage 6 — Code Generation)
+   Load: compilation skill (SKILL.md) + stage-5-constrained/ output files
    Run Stage 6 → write stage-6-generated/ files
-   Clear context
+   Terminate Agent 8
 
-7. Run post-compile validation on stage-6-generated/output-draft.md
+9. Run post-compile validation on stage-6-generated/output-draft.md
    If validation passes → copy to final output path
    If validation fails → report errors, leave compilation folder intact for diagnosis
 ```
 
-### Why This Workflow
+### Zero initial context
+
+Before the first sub-agent spawns, the agent has zero context about the document being compiled, its content, or any compilation stage. No preloading. No assumptions. No prior knowledge.
+
+### Sole information boundary
+
+The only information a sub-agent has about its stage is the output files from the previous stage loaded from disk. The sub-agent MUST NOT reference, recall, or infer content from any other stage's output.
+
+### Why sub-agent per stage/pass
 
 | Benefit | Explanation |
 |---------|-------------|
-| **Minimizes context contamination** | Each stage sees only its own inputs and the skill instructions. No mixing of representations from different stages. |
-| **Enforces pipeline discipline** | The agent cannot shortcut by referencing data from earlier stages — it must use the proper input files. |
-| **Enables error recovery** | If Stage 3 fails, re-run only Stage 3. Its inputs are already on disk. |
-| **Supports auditability** | Any stage's output can be inspected to diagnose issues or verify correctness. |
-| **Allows parallel compilation** | Multiple documents can compile simultaneously since each has its own isolated `.compilation/` folder. |
-| **Reduces attention dilution** | The agent's context window contains only relevant data for the current stage, not accumulated residue from earlier stages. |
+| **Eliminates context residue** | Sub-agent termination (process exit) guarantees zero carryover. Conversation history is destroyed, not just "cleared" by instruction. |
+| **Enforces pipeline discipline** | The sub-agent cannot shortcut by referencing data from earlier stages — it structurally has no access to them. Only its input files exist. |
+| **Enables error recovery** | If Pass 2 fails, spawn a fresh agent against the same Pass 1 output. No need to unwind accumulated reasoning state. |
+| **Supports auditability** | Each stage's output is on disk independently. Any stage can be inspected to diagnose issues. |
+| **Allows parallel compilation** | Multiple documents can compile simultaneously — each sub-agent is independent with its own `.compilation/` folder. |
+| **Guarantees determinism** | Structural isolation, not behavioral compliance. The thing that knew the previous stage's content no longer exists. |
 
-### Clarification on "Hallucinations"
+### Clarification on context isolation
 
-The term "hallucination" (model fabricating facts) is not precisely what this prevents. The actual benefits are:
+The term "hallucination" (model fabricating facts) is not precisely what sub-agent isolation prevents. The actual risks eliminated are:
 
-1. **Context contamination** — The model mixing representations from different stages, losing track of which data is current, or producing output that references stale intermediate forms.
+1. **Context residue** — A single agent carrying representations from earlier stages into later ones. With sub-agents, this is structurally impossible: the agent that held Stage 1's content is destroyed before Stage 2 spawns.
 
-2. **Attention dilution** — As context fills, models attend less precisely to content. Empirical research shows attention degrades at context edges and exhibits "lost in the middle" phenomena. Fresh loads keep relevant content prominent.
+2. **Cross-stage contamination** — An agent referencing Stage 1's raw text while running Stage 4's optimization, producing output that mixes intermediate forms. Sub-agents have access to exactly one stage's output — their designated input files on disk.
 
-3. **Stage boundary enforcement** — File persistence makes pipeline discipline involuntary. The agent cannot "cheat" by looking at Stage 1 output while running Stage 4, because it's not in context.
+3. **Attention dilution** — Irrelevant when each sub-agent sees only its own input. The context window is focused by construction, not by instruction.
 
-These are distinct from hallucination but equally damaging to compilation correctness.
+These are distinct from hallucination but equally damaging to compilation correctness. Sub-agent isolation eliminates all three by structural design.
 
 ---
 
