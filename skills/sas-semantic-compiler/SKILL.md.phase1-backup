@@ -3,62 +3,48 @@ name: sas-semantic-compiler
 description: Compile markdown documents (.human.md) into AI-optimized output. Transforms human-readable markdown into machine-optimized form via a 6-stage pipeline with sub-agent isolation. Invokes compilation of skills, plans, and agent-directed documents.
 ---
 
-<!-- compiled from: skills/sas-semantic-compiler/SKILL.human.md | 2026-04-13T14:00:06Z -->
+<!-- compiled from: skills/sas-semantic-compiler/SKILL.human.md | 2026-04-13T10:30:00Z -->
 
 ## Purpose
 
-<purpose>
-[P0] Compile `.human.md` source documents into AI-optimized `.md` output via a 6-stage pipeline with sub-agent isolation. Output is designed exclusively for AI agent execution — human readability is not a concern.
-[P0] Ambiguities or errors HALT compilation entirely.
-</purpose>
+Compile `.human.md` source documents into AI-optimized `.md` output via a 6-stage pipeline with sub-agent isolation. Output is designed exclusively for AI agent execution — human readability is not a concern.
 
 ## Scope
 
-<scope>
-- Target: Skill files (SKILL.md and related), implementation plans, any markdown with instructions/guidelines/structured info for AI agents
-- Excluded: README files, documentation for human end-users, any human-consumption documents
-</scope>
+- Target: Skill files, implementation plans, markdown with instructions/guidelines/structured info for AI agents
+- Excluded: README files, human end-user documentation, human-consumption documents
 
 ## Inputs
 
-<inputs>
 - Source `.human.md` file path (required)
 - Compilation skill instructions (`SKILL.md`) loaded by each sub-agent
 - Architecture reference documents in `architecture/` folder
-</inputs>
 
 ## Outputs
 
-<outputs>
 - Compiled output file (`.compiled.md` or `SKILL.md` for skills)
 - Persistent `.DocName.compilation/` folder with all intermediate stage files
-</outputs>
 
 ## Constraints
 
-<constraints>
-[P0] Must not edit compiled files — always regenerate from source
-[P0] Must not commit `.compilation/` folders to git
-[P0] Must not reuse sub-agents across stages/passes — fresh agent per stage/pass is required
-[P0] Must not proceed to compilation if preprocessor finds conflicts, contradictions, or ambiguities
-[P0] Must not guess or imply defaults for unspecified behavior
-[P0] Must halt pipeline immediately on any error — no partial output
-[P0] Must not reference content from stages other than the designated input files
-</constraints>
+- Must not edit compiled files — always regenerate from source
+- Must not commit `.compilation/` folders to git
+- Must not reuse sub-agents across stages/passes — fresh agent per stage/pass is required
+- Must not proceed to compilation if preprocessor finds conflicts, contradictions, or ambiguities
+- Must not guess or imply defaults for unspecified behavior
+- Must halt pipeline immediately on any error — no partial output
+- Must not reference content from stages other than the designated input files
 
 ## Invariants
 
-<invariants>
-[P0] Each stage/pass executes in a separate sub-agent with zero context from prior stages
-[P0] Sub-agent lifecycle: Spawn → Load (skill + previous stage output) → Process → Write → Terminate
-[P0] Preprocessor must complete fully without errors before compiler runs
-[P0] Each stage receives only the previous stage's output as input — nothing else
-[P0] `.compilation/` folders retained after successful compilation for auditability
-</invariants>
+- Each stage/pass executes in a separate sub-agent with zero context from prior stages
+- Sub-agent lifecycle: Spawn → Load (skill + previous stage output) → Process → Write → Terminate
+- Preprocessor must complete fully without errors before compiler runs
+- Each stage receives only the previous stage's output as input — nothing else
+- `.compilation/` folders retained after successful compilation for auditability
 
 ## Failure Modes
 
-<failure_modes>
 | Stage | Code | Meaning |
 |-------|------|---------|
 | Preprocessor | `PRE_001` | Referenced file not found |
@@ -76,12 +62,10 @@ description: Compile markdown documents (.human.md) into AI-optimized output. Tr
 | Code Generation | `GEN_001` | Output path not writable |
 | | `GEN_002` | Template rendering failure |
 
-Any error → pipeline halts immediately. Error reported with stage name, code, description, and source line number. All intermediate files retained in `.DocName.compilation/` for diagnosis. No partial output written to final destination.
-</failure_modes>
+**Error handling:** Any error → pipeline halts immediately. Error reported with stage name, code, description, and source line number. All intermediate files retained in `.DocName.compilation/` for diagnosis. No partial output written to final destination.
 
 ## Validation Strategy
 
-<validation_strategy>
 ### Tier 1 — Structural Check (automatic, fast, deterministic)
 
 - Verify all 10 universal sections present with XML-like tags
@@ -96,33 +80,26 @@ Any error → pipeline halts immediately. Error reported with stage name, code, 
 
 - Agent-based comparison of source vs compiled output on representative tasks
 - Threshold: 90%+ task equivalence across 5+ benchmark tasks
-</validation_strategy>
 
 ## Relationships
 
-<relationships>
 - Depends on: `architecture/` folder (12 reference documents)
 - Produces: compiled output in same directory as source
 - Cross-referenced documents compiled together (transitive, max depth 5)
 - Circular references halt compilation with `PRE_002`
-</relationships>
 
 ## Guarantees
 
-<guarantees>
-[P0] Deterministic output — identical input produces equivalent output
-[P0] Same meaning, different surface — compiler controls human-to-AI optimization dial
-[P0] All intermediate files permanently persisted for auditability and error diagnosis
-[P0] Each phase produces a working, usable compiler
-</guarantees>
+- Deterministic output — identical input produces equivalent output
+- Same meaning, different surface — compiler controls human-to-AI optimization dial
+- All intermediate files permanently persisted for auditability and error diagnosis
+- Each phase produces a working, usable compiler
 
 ---
 
 ## Sub-Agent Execution Model
 
-<invocation_conditions>
 **Invariant — Fresh sub-agent per stage/pass:** Each of the 6 pipeline stages and each of the 3 Stage 4 optimization passes MUST execute in a separate sub-agent. Reusing a single agent across multiple stages or passes is forbidden. Sub-agent termination (process exit) is the only mechanism that provides structural context isolation.
-</invocation_conditions>
 
 ### Execution Sequence (8 sub-agent invocations)
 
@@ -159,7 +136,6 @@ The only information a sub-agent has about its stage is the output files from th
 
 ## Compilation Pipeline — 6 Stages
 
-<stage_specifications>
 ### Stage 1 — Preprocessor
 
 - Macro expansion, file inclusion, conflict detection, filler identification, contextual reasoning compression
@@ -236,13 +212,11 @@ The only information a sub-agent has about its stage is the output files from th
 - Emit type-specific sections the same way
 - Write to `{output_path}`
 - Output: `output-draft.md` → `stage-6-generated/`, then copied to final output path
-</stage_specifications>
 
 ---
 
 ## Filler Classification (8 Categories)
 
-<filler_classification>
 | Classification | Action |
 |---|---|
 | Verbose filler | REMOVE |
@@ -255,13 +229,11 @@ The only information a sub-agent has about its stage is the output files from th
 | Metadata/provenance | COMPRESS → single-line header |
 
 **Decision heuristic:** "What should the agent DO?" or "what must it NOT DO?" → preserve. "Why did humans write it this way?" → compress. Social lubricant → remove.
-</filler_classification>
 
 ---
 
 ## 10 Universal Required Sections
 
-<universal_sections>
 1. Purpose — why this artifact exists
 2. Scope — what it covers and excludes
 3. Inputs — explicit sources, formats, preconditions
@@ -274,13 +246,11 @@ The only information a sub-agent has about its stage is the output files from th
 10. Guarantees — postconditions committed to
 
 Plus type-specific sections: Skills (Invocation Conditions, Forbidden Usage, Phase Separation), Plans (Data Model, Architecture, Key Operations).
-</universal_sections>
 
 ---
 
 ## Syntactic Transformations
 
-<syntactic_transformations>
 - Strip filler phrases, polite language, conversational transitions, rhetorical questions
 - Remove redundant restatements
 - Collapse verbose examples
@@ -289,11 +259,9 @@ Plus type-specific sections: Skills (Invocation Conditions, Forbidden Usage, Pha
 - Compress whitespace, remove unnecessary blank lines
 - Convert prose to numbered steps
 - Replace ambiguous references with explicit identifiers
-</syntactic_transformations>
 
 ## Semantic Transformations
 
-<semantic_transformations>
 - Reorganize narrative into logical instruction hierarchies
 - Extract implicit constraints, make explicit
 - Convert conditionals to IF/THEN/ELSE
@@ -302,32 +270,24 @@ Plus type-specific sections: Skills (Invocation Conditions, Forbidden Usage, Pha
 - Resolve ambiguity: "might"/"could"/"should" → definitive directives
 - Group related constraints (even if scattered in source)
 - Add cross-references between sections using explicit anchors/IDs
-</semantic_transformations>
 
 ---
 
 ## Declarative Language Rules
 
-<declarative_language>
 - Use: `must`, `must not`, `required`, `forbidden`, `guaranteed`
 - Avoid: `try to`, `ideally`, `if possible`, `approximately`
-</declarative_language>
 
 ## Uncertainty Handling
 
-<uncertainty_handling>
 If unspecified: write "This is currently unspecified and must be decided before use." Do not guess. Do not imply defaults.
-</uncertainty_handling>
 
 ## Negative Constraints
 
-<negative_constraints>
 Must explicitly state what the agent must not do.
-</negative_constraints>
 
 ## KERNEL Framework
 
-<kernel_framework>
 | Letter | Principle |
 |--------|-----------|
 | K | Keep it simple — single, unambiguous primary goal |
@@ -336,13 +296,11 @@ Must explicitly state what the agent must not do.
 | N | Narrow scope — explicit domain and task limits |
 | E | Explicit constraints — hard boundaries on data, tools, capabilities |
 | L | Logical structure — strict structural/styling boundaries |
-</kernel_framework>
 
 ---
 
 ## File Structure
 
-<file_structure>
 ```
 X/
 ├── DocX.human.md               ← source
@@ -359,38 +317,32 @@ X/
 **Source stem derivation:** `SKILL.human.md` → `.SKILL.compilation/`, `release-plan.human.md` → `.release-plan.compilation/`
 
 **Git ignore:** `*.compilation/`
-</file_structure>
 
 ---
 
 ## Error Diagnosis
 
-<error_diagnosis>
 1. Read error message → identify failing stage + code
 2. Open corresponding stage folder in `.DocName.compilation/`
 3. Inspect output files
 4. If needed, inspect previous stage's output to verify inputs
 5. Fix source document and recompile
-</error_diagnosis>
 
 ---
 
 ## Operational Rules
 
-<forbidden_usage>
 - Manual invocation only (intentional user action required)
 - Full pipeline run — no incremental compilation
 - Never edit compiled files — regenerate from source
 - Humans edit source files only
 - Standalone skill — no dependencies on other skills, no external tools required
 - Processes single files or entire directories
-</forbidden_usage>
 
 ---
 
 ## Implementation Status
 
-<phase_separation>
 | Feature | Status |
 |---------|--------|
 | Stage 1-3 full implementation | Implemented (Phase 1) |
@@ -400,18 +352,15 @@ X/
 | XML-like tag wrapping | Implemented (Phase 2) |
 | Tier 1 structural validation | Implemented (Phase 2) |
 | Tier 2 functional equivalence | Deferred Phase 4 |
-| Self-compilation | In Progress (Phase 3) |
+| Self-compilation | Deferred Phase 3 |
 | Separate verification skill | Deferred Phase 4 |
-</phase_separation>
 
 ---
 
 ## Design Principles
 
-<design_principles>
 - Trust file persistence over AI context window memory
 - Aggressive from the start — full 6-stage pipeline
 - HALT on errors — no partial output, no guessing
 - Deterministic output — constraining probabilistic systems → deterministic results
 - Same meaning, different surface
-</design_principles>
