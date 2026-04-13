@@ -1,234 +1,123 @@
+<!-- compiled from: skills/sas-git-commit-and-push/SKILL.human.md | 2026-04-13T10:06:06Z -->
+
 ---
 name: sas-git-commit-and-push
-description: Commit all changes using conventional commit messages and push to remote.
+description: Commit all changes using conventional commit messages and push to remote. Use when the user asks to commit and push, or when work is ready to be saved and shared.
 ---
 
-<!-- compiled from: skills/sas-git-commit-and-push/SKILL.human.md | 2026-04-13T10:35:00Z -->
+<Purpose>
+[P1] Skill autonomously stages, commits, and pushes without asking user permission. User has given implicit consent by invoking the skill. Ensures commits follow project conventions, handles edge cases, keeps working tree predictable.
+</Purpose>
 
-## Purpose
+<Scope>
+[P1] Target: git repositories with staged or unstaged changes. Applies to any branch, any remote. Excluded: repositories with unresolvable merge conflicts requiring manual intervention, repositories without write access to remote.
+</Scope>
 
-<purpose>
-[P0] Autonomously stage, commit, and push changes with conventional commit messages — no permission prompts.
-</purpose>
+<Inputs>
+[P1] Working directory containing a git repository. Changes may include new files, modified files, deleted files. Repository may have a configured remote or be local-only.
+</Inputs>
 
-## Scope
+<Outputs>
+[P1] One or more commits to local repository. Changes pushed to remote branch. Working tree clean after execution. Report of commit message(s), branch name, and remote URL if new branch created.
+</Outputs>
 
-<scope>
-- Target: Git repositories with uncommitted changes ready to be saved and shared
-- Input: Current working tree state (staged + unstaged changes)
-- Output: One or more conventional commits pushed to remote
-- Excluded: Partial staging (commits all changes), interactive rebase, selective file commits
-</scope>
+<Constraints>
+[P0] Must use Conventional Commits format: type(scope): description. Must explain why in body, not what. Must match style of recent commits from git log. [ref: sec-steps-004]
+[P0] Must not edit committed files after push. Must not amend pushed commits. Must not force-push over shared history.
+</Constraints>
 
-## Inputs
+<Invariants>
+[P0] NEVER ask user for permission, confirmation, or approval. Do not present draft commit message for approval. Do not ask should I commit or ready to push. Stage, commit, and push directly.
+[P0] NEVER skip committing changes because diff is large, complex, or touches many files.
+[P0] NEVER leave working tree dirty after successful commit + push (unless edge cases prevent it). [ref: sec-edge-cases-001]
+</Invariants>
 
-<inputs>
-- Git repository (current directory or parent contains `.git`)
-- Working tree with changes (new, modified, or deleted files)
-- Recent commit history (for style matching via `git log -n 3`)
-</inputs>
+<Failure Modes>
+[P0] FM_001 — No git repository: git status fails with "fatal: not a git repository". Agent reports error and halts. No commit attempted.
+IF current directory is not a git repository → report error, halt pipeline.
+[P0] FM_002 — Push rejected: remote rejects push due to authentication failure, branch protection, or non-fast-forward. Agent reports error with remote message. Local commits remain intact.
+IF git push fails with authentication or protection error → report remote error message, local commits preserved.
+[P0] FM_003 — Unresolvable merge conflict in progress: git status shows MERGE_HEAD or REBASE_HEAD with conflicts. Agent warns user but proceeds with staging and committing if possible. [ref: sec-steps-001]
+IF merge or rebase conflict is in progress → display warning, attempt staging and committing.
+</Failure Modes>
 
-## Outputs
+<Validation Strategy>
+[P1] Post-execution: Run git status to verify working tree is clean. Run git log -n 1 to verify commit message follows Conventional Commits format. Run git remote -v to verify remote URL if new branch.
+</Validation Strategy>
 
-<outputs>
-- One or more conventional commits on current branch
-- Changes pushed to remote repository
-- Working tree clean after successful commit + push (unless edge cases prevent)
-</outputs>
+<Relationships>
+[P2] Depends on: git CLI available on system. Repository must be initialized (git init or git clone). Remote must be configured (git remote add) for push to succeed. Skill is standalone — no other skills or tools required.
+</Relationships>
 
-## Constraints
+<Guarantees>
+[P0] Working tree is clean after successful execution. All changes are committed with Conventional Commits format. Push succeeds or error is reported with remote message. No partial state: either all changes committed and pushed, or nothing changed.
+</Guarantees>
 
-<constraints>
-[P0] Must NOT ask user for permission, confirmation, or approval at any point.
-[P0] Must NOT skip committing changes because diff is large, complex, or touches many files.
-[P0] Must NOT leave working tree dirty after successful commit + push (unless edge cases prevent).
-[P0] Must NOT present draft commit message and ask "does this look good?"
-[P0] Must NOT ask "should I commit?" or "ready to push?"
-[P1] Must stage all changes with `git add -A`.
-[P1] Must follow Conventional Commits format: `type(scope): description`.
-[P1] Must match commit message style of recent commits (`git log -n 3`).
-</constraints>
+<Invocation Conditions>
+[P0] Skill is invoked when user requests commit and push action. User has given implicit consent. Skill executes without permission prompts. Agent must not ask for confirmation at any stage. [ref: sec-invariants-001]
+</Invocation Conditions>
 
-## Invariants
+<Forbidden Usage>
+[P0] Must not ask user for permission or confirmation. Must not present draft commit message for approval. Must not skip commit due to diff size. Must not force-push. Must not amend pushed commits. [ref: sec-invariants-001, sec-invariants-002]
+</Forbidden Usage>
 
-<invariants>
-[P0] User invoking the skill has given implicit consent — no explicit confirmation required.
-[P0] Commit message body must explain WHY, not WHAT.
-[P0] Documentation-only changes use `docs:` prefix.
-[P0] Code fixes use `fix:` prefix.
-[P0] Refactoring (no behavior change) uses `refactor:` prefix.
-[P0] Feature work uses `feat:` prefix.
-[P0] Chore/misc uses `chore:` prefix.
-[P0] Test changes use `test:` prefix.
-</invariants>
+<Instructions>
+[P1] When invoked, stage all changes, create one or more conventional commits, push to remote repository. Working tree must be clean afterward.
+</Instructions>
 
-## Failure Modes
+<Steps>
+1. [P1] Check current state: Run git status, git diff HEAD, git log -n 3 --oneline. Check for in-progress operations (merge, rebase, cherry-pick, conflict) — display warning but proceed.
+2. [P1] Stage all changes: Run git add -A to stage everything (new, modified, deleted).
+3. [P1] Determine commit strategy:
+   - Single change → one commit with conventional commit message
+   - Multiple independent changes → multiple atomic commits, each with own conventional message
+   - Documentation → docs: prefix
+   - Code fixes → fix: prefix
+   - Refactoring → refactor: prefix
+   - Feature → feat: prefix
+   - Chore → chore: prefix
+   - Tests → test: prefix
+4. [P1] Write commit message: Follow Conventional Commits format type(scope): description. Body explains why not what. Match style of recent commits from git log -n 3. Do not ask user for permission or confirmation. [ref: sec-invariants-001]
+5. [P1] Commit: Run git commit -m "message" (or multiple commits for separate logical groups). Verify with git status that working tree is clean.
+6. [P1] Push: Run git push.
+   IF git push fails with no upstream branch → run git push --set-upstream origin branch-name.
+   Report result including remote URL if new branch created.
+</Steps>
 
-<failure_modes>
-| Scenario | Handling |
-|----------|----------|
-| No changes | Report: working tree already clean. Nothing to do. Exit. |
-| Untracked files in `.gitignore` | Add to `.gitignore` rather than commit. |
-| Mixed doc + code changes | Commit code and docs as separate atomic commits. |
-| `git push` fails (no upstream) | Run `git push --set-upstream origin <branch-name>`. |
-| Merge/rebase/cherry-pick in progress | Display warning, proceed with staging and committing. |
-| Not in git repository | Display error: git operations not supported in current directory. Exit. |
-</failure_modes>
+<Edge Cases>
+[P1] EC_001 — No changes: Report working tree is already clean. Nothing to do.
+IF working tree is clean after git status → report clean state, exit.
+[P1] EC_002 — Untracked files in .gitignore: These must be added to .gitignore rather than committed.
+[P1] EC_003 — Mixed doc + code changes: Commit code and docs as separate atomic commits. [ref: sec-steps-003]
+IF changes include both documentation and code → commit code and docs as separate atomic commits.
+</Edge Cases>
 
-## Validation Strategy
-
-<validation_strategy>
-- Verify `git status` shows clean working tree after commit + push
-- Verify commit message follows Conventional Commits format
-- Verify changes pushed to remote successfully
-- Verify commit count matches logical change groups
-</validation_strategy>
-
-## Relationships
-
-<relationships>
-- Depends on: Git repository with remote configured
-- Consumed by: Remote repository collaborators
-- Complementary to: `sas-git-merge` (branch merging workflow)
-</relationships>
-
-## Guarantees
-
-<guarantees>
-[P0] All changes committed and pushed without user confirmation prompts.
-[P0] Conventional commit messages match project style.
-[P1] Working tree clean after successful operation.
-[P2] Push result reported including remote URL for new branches.
-</guarantees>
-
----
-
-## Invocation Conditions
-
-<invocation_conditions>
-- User asks to "commit and push" or similar
-- Work is ready to be saved and shared
-- User invoking the skill has given implicit consent
-</invocation_conditions>
-
-## Forbidden Usage
-
-<forbidden_usage>
-- Must NOT ask "should I commit?" before staging
-- Must NOT ask "does this commit message look good?" before committing
-- Must NOT ask "ready to push?" before pushing
-- Must NOT skip commits due to large diffs
-- Must NOT leave working tree dirty after completion
-- Must NOT commit files that should be in `.gitignore`
-</forbidden_usage>
-
-## Phase Separation
-
-<phase_separation>
-- This skill is fully implemented and operational.
-- No deferred features.
-</phase_separation>
-
----
-
-## Execution Steps
-
-### Step 1: Check Current State
-
-<step1_check_state>
-[P0] Run `git status` — determine what has changed.
-[P0] Run `git diff HEAD` — review full diff of all changes.
-[P0] Run `git log -n 3 --oneline` — review recent commit message style.
-
-IF `git status` indicates merge, rebase, cherry-pick, or conflict in progress:
-  THEN display warning but proceed with staging and committing.
-</step1_check_state>
-
-### Step 2: Stage All Changes
-
-<step2_stage>
-[P0] Run `git add -A` — stage everything (new, modified, deleted).
-</step2_stage>
-
-### Step 3: Determine Commit Strategy
-
-<step3_strategy>
-IF single logical change:
-  THEN one commit with conventional commit message.
-IF multiple independent changes:
-  THEN multiple atomic commits, each with own conventional commit message.
-IF documentation-only changes:
-  THEN use `docs:` prefix.
-IF code fixes:
-  THEN use `fix:` prefix.
-IF refactoring (no behavior change):
-  THEN use `refactor:` prefix.
-IF feature work:
-  THEN use `feat:` prefix.
-IF chore/misc:
-  THEN use `chore:` prefix.
-IF test changes:
-  THEN use `test:` prefix.
-</step3_strategy>
-
-### Step 4: Write Commit Message
-
-<step4_message>
-[P0] Follow Conventional Commits format: `type(scope): description`.
-[P0] Body must explain WHY, not WHAT.
-[P0] Match style of recent commits (from `git log -n 3`).
-[P0] Must NOT ask user for permission or confirmation. Commit directly with drafted message.
-</step4_message>
-
-### Step 5: Commit
-
-<step5_commit>
-[P0] Run `git commit -m "message"` (or multiple commits for separate logical groups).
-[P1] Verify with `git status` that working tree is clean.
-</step5_commit>
-
-### Step 6: Push
-
-<step6_push>
-[P0] Run `git push`.
-IF fails with "no upstream branch":
-  THEN run `git push --set-upstream origin <branch-name>`.
-[P1] Report result including remote URL if new branch was created.
-</step6_push>
-
-### Edge Case: No Changes
-
-<edge_no_changes>
-Report: working tree already clean. Nothing to do. Exit.
-</edge_no_changes>
-
-### Edge Case: Untracked Files in .gitignore
-
-<edge_untracked_gitignore>
-Add untracked files to `.gitignore` rather than committing them.
-</edge_untracked_gitignore>
-
-### Edge Case: Mixed Doc + Code Changes
-
-<edge_mixed_changes>
-Commit code and docs as separate atomic commits.
-</edge_mixed_doc_code>
-
----
-
-## Conventional Commit Types
-
-<commit_types>
+<Conventional Commit Types>
 | Type | When to use |
 |------|-------------|
-| `feat` | New feature or capability |
-| `fix` | Bug fix or error correction |
-| `docs` | Documentation-only changes |
-| `refactor` | Code restructuring with no behavior change |
-| `chore` | Maintenance, tooling, config changes |
-| `test` | Test additions or modifications |
-| `ci` | CI/CD pipeline changes |
-| `build` | Build system or dependency changes |
-| `perf` | Performance improvements |
-| `revert` | Reverting a previous commit |
-</commit_types>
+| feat | New feature |
+| fix | Bug fix |
+| docs | Documentation-only |
+| refactor | Restructuring no behavior change |
+| chore | Maintenance, tooling, config |
+| test | Test additions |
+| ci | CI/CD pipeline |
+| build | Build system, dependencies |
+| perf | Performance improvements |
+| revert | Revert previous commit |
+</Conventional Commit Types>
+
+<Examples>
+[P2] Standard invocation:
+User: "commit and push"
+→ Review status and diff, stage all, write commit message, commit, push [ref: sec-steps-001 through sec-steps-006]
+
+[P2] Skill command invocation:
+User: "/git-commit-and-push"
+→ Same flow as standard invocation [ref: sec-instructions-001]
+
+[P2] New branch with no upstream:
+User: "commit and push" (new branch with no upstream)
+→ git push fails with "no upstream branch", run git push --set-upstream origin branch and report success [ref: sec-steps-006]
+IF new branch with no upstream → run git push --set-upstream origin branch.
+</Examples>

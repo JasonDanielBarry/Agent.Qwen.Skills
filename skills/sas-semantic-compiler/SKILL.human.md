@@ -272,7 +272,16 @@ Condition {
 - "depends"/"relates" → `relationship`
 - "verify"/"validate"/"test"/"check" → `validation`
 - "version"/"author"/"date" → `metadata`
+- "rule"/"policy" → `constraint` (alias mapping)
+- "file_structure"/"directory_layout"/"folder" → `instruction` (alias mapping)
+- Content under "Purpose" heading → `fact`
+- Content under "Validation Strategy" heading → `instruction`
+- Content under "Scope" heading → `fact` or `constraint`
+- Content under "Relationships" heading → `relationship`
+- Content under "Guarantees" heading → `guarantee`
 - Everything else → classified by filler rules
+
+**Type alias mapping:** Section names MUST NOT be used as semantic role types. The semantic role describes *what kind of instruction* the content is, not *which section it belongs to*. If content matches multiple keywords, use structural context (section heading) as tiebreaker. If content matches no keyword, classify by the nearest valid type based on its functional role in agent execution.
 
 **Error codes:**
 
@@ -289,8 +298,10 @@ Condition {
 - Remove all `type: "filler"` IRUnits
 - Compress `type: "rationale"` units to `[rationale: X]`
 - Compress `type: "metadata"` units to single-line header
-- Merge adjacent IRUnits of same type in same section
+- Merge adjacent IRUnits of same type in same section — **EXCEPT** (see Max Density Rule below)
 - Strip decorative formatting
+- **Max Density Rule:** Do NOT merge numbered step sequences, failure modes, edge cases, or constraints with distinct conditions. Each must remain as a separate IRUnit. When in doubt, do not merge.
+- **Example preservation:** For procedural skills, retain at least one concrete example. Do not generalize all examples away.
 
 **Pass 2 — Tag & Structure:**
 - Assign explicit `id` to every IRUnit (`sec-{section}-{index}`)
@@ -424,11 +435,24 @@ The preprocessor applies an 8-category classification to every block of content:
 | **Justification/provenance** | COMPRESS to 1 line | "Why" explanations → `[rationale: X]` |
 | **Hedging language** | RESOLVE | Replace with definitive directive OR `[optional: X]` |
 | **Contextual reasoning** | COMPRESS but PRESERVE | Conditional logic, edge cases, cross-section dependencies, terminology definitions |
-| **Examples** | GENERALIZE | Replace with minimal schema/pattern + reference |
+| **Examples** | GENERALIZE (keep 1+) | Replace with minimal schema/pattern + reference. **For procedural skills** (skills that tell an agent how to execute a task), retain at least one concrete worked example. Pure reference/data skills may generalize all examples. |
 | **Instructions/constraints/rules** | PRESERVE + RESTRUCTURE | Any statement telling the agent what to do or not do |
-| **Metadata/provenance** | COMPRESS | Version history, author info → single-line header |
+| **Metadata/provenance** | COMPRESS | Version history, author info → single-line header. Well-known external conventions (e.g., standard git commit types, common file formats) → single reference line, not individual entries. |
 
 **Decision heuristic:** If content answers "what should the agent DO?" or "what must it NOT DO?" → preserve. If it answers "why did humans write it this way?" → compress. If it's social lubricant → remove.
+
+### Max Density Rule (Pass 1 — Strip & Compress)
+
+When merging adjacent IRUnits of the same type in the same section, the following structural sequences MUST NOT be merged into run-on prose:
+
+| Sequence Type | Must Remain Separate | Reason |
+|---|---|---|
+| Numbered step sequences | Each step = separate IRUnit | Agents execute one step at a time; dense paragraphs are not executable |
+| Failure modes | Each failure mode = separate IRUnit | Agents scan for specific failure scenarios; buried text is missed |
+| Edge cases | Each edge case = separate IRUnit | Conditional triggers need individual scanability |
+| Constraints with distinct conditions | Each constraint = separate IRUnit | Different conditions apply to different situations |
+
+**Allowed merges:** Adjacent units that are truly redundant restatements, or units that express the same constraint from the same angle with no distinct condition. When in doubt, do not merge.
 
 ---
 

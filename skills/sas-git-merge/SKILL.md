@@ -1,310 +1,182 @@
+<!-- compiled from: skills/sas-git-merge/SKILL.human.md | 2026-04-14T00:00:00Z -->
+
 ---
 name: sas-git-merge
-description: Merge branches interactively with guided conflict resolution.
+description: Merge branches interactively with guided conflict resolution. Use when the user wants to merge branches, review merge options, or handle merge conflicts.
 ---
 
-<!-- compiled from: skills/sas-git-merge/SKILL.human.md | 2026-04-13T10:35:00Z -->
+<Purpose>
+[P2] Guided, safe workflow for merging branches. Verifies repo state, presents target branches, user chooses merge target, executes merge, presents conflict options without auto-resolving. User controls every decision point. Post-merge: push, branch cleanup, undo.
+[P0] Core direction: merge the current branch (source) INTO the target branch.
+</Purpose>
 
-## Purpose
+<Scope>
+[P2] Target: Git repositories accessible via CLI. Agent must have git installed and available in PATH. Works with local and remote branches.
+[P2] Excluded: non-git version control systems (SVN, Mercurial), GUI git clients, automated CI/CD merge pipelines.
+</Scope>
 
-<purpose>
-[P0] Provide a guided, safe workflow for merging branches — verifying repo state, presenting target branches, executing merge, and handling conflicts without auto-resolution.
-</purpose>
+<Inputs>
+[P1] Current working directory must be inside a git repository.
+[P1] User invocation: interactive (skill triggered without branch names) or direct (explicit source->target branch names provided).
+</Inputs>
 
-## Scope
+<Outputs>
+[P1] Successful merge commit on target branch (or staged changes for squash).
+[P2] Optional: pushed to remote, source branch deleted, user returned to original branch.
+</Outputs>
 
-<scope>
-- Target: Git repositories requiring branch merges
-- Input: Current branch (source), user-selected target branch
-- Output: Clean merge or guided conflict resolution with post-merge actions
-- Excluded: Auto-resolving merge conflicts, merging without user awareness, detached HEAD merges
-</scope>
+<Constraints>
+[P0] Do NOT auto-resolve conflicts.
+[P0] User must confirm every decision point before execution.
+[P0] Must not proceed with merge if repo state is invalid (not a git repo, dirty tree unresolved, detached HEAD without warning).
+[P0] Core direction: merge the current branch (source) INTO the target branch.
+</Constraints>
 
-## Inputs
+<Invariants>
+[P0] User remains in control at every decision point. No automatic branch selection, conflict resolution, or push without explicit consent.
+[P0] Source branch is always the current branch at skill invocation time. Target branch is always the branch the user selects to merge into.
+[P0] Pre-merge state is always restorable via git merge --abort if merge has conflicts.
+</Invariants>
 
-<inputs>
-- Git repository (verified via `git rev-parse --show-toplevel`)
-- Current branch name (source branch to merge)
-- User-selected target branch (branch to merge into)
-- User-selected merge strategy (fast-forward, no-ff, ff-only, squash)
-</inputs>
+<Failure Modes>
+1. [P1] Not in git repository: git rev-parse fails → inform user and exit.
+2. [P1] Merge already in progress: present continue/abort/inspect options.
+3. [P1] Dirty working tree: warn user, offer stash or commit.
+4. [P1] Detached HEAD: warn user, recommend checkout branch.
+5. [P1] Checkout fails during branch switch: report error, offer stash/commit.
+6. [P1] Merge conflicts: present 5 resolution options, do NOT auto-resolve.
+</Failure Modes>
 
-## Outputs
+<Validation Strategy>
+[P1] After checkout, verify `git branch --show-current` shows target branch.
+[P1] After merge, verify `git status` shows clean working tree.
+[P1] Post-merge: `git log --oneline -n 3` shows expected merge commit.
+</Validation Strategy>
 
-<outputs>
-- Merged target branch with source branch changes integrated
-- Post-merge options: push, branch cleanup, source branch deletion, undo guidance
-- Conflict report (if conflicts detected): list of conflicted files + resolution options
-</outputs>
+<Relationships>
+[P2] Depends on: git CLI installed and accessible in PATH.
+[P2] Related skills: sas-git-commit-and-push (post-merge push workflow).
+</Relationships>
 
-## Constraints
+<Guarantees>
+[P0] Pre-merge state is always restorable if merge has not completed.
+[P0] No automatic conflict resolution — user controls every merge decision.
+</Guarantees>
 
-<constraints>
+---
+
+<Invocation Conditions>
+[P1] Triggered when user asks to merge branches, review merge options, or handle merge conflicts.
+[P1] Interactive mode: skill triggered without branch names (e.g., 'merge my branch').
+[P1] Direct mode: skill triggered with explicit source->target (e.g., '/sas-git-merge feature/x -> develop').
+</Invocation Conditions>
+
+---
+
+<Forbidden Usage>
 [P0] Must NOT auto-resolve merge conflicts.
-[P0] Must merge current branch (source) INTO target branch — direction is fixed.
-[P0] Must NOT proceed with merge if conflicts exist without presenting resolution options.
-[P0] Must NOT leave user unaware of merge state (success, conflict, or already up-to-date).
-[P1] Must fetch latest state before merge (`git fetch --prune`).
-[P1] Must check for in-progress merge before starting new merge.
-[P1] Must check for dirty working tree before merge.
-[P1] Must check for detached HEAD before merge.
-[P2] Must offer dry-run preview option before executing merge.
-</constraints>
-
-## Invariants
-
-<invariants>
-[P0] User remains in control at every decision point.
-[P0] Merge direction: source (current branch) → target (selected branch).
-[P0] Conflicts presented with explicit options — never auto-resolved.
-[P0] Post-merge actions offered, not forced.
-</invariants>
-
-## Failure Modes
-
-<failure_modes>
-| Scenario | Handling |
-|----------|----------|
-| Not in git repository | Inform user git operations not supported in current directory. Exit. |
-| Merge already in progress | Inform user, present options: continue, abort, inspect conflicts. Wait for decision. |
-| Dirty working tree | Warn user, offer to stash or commit first. Wait for decision. |
-| Detached HEAD | Warn user, recommend checking out a branch first. |
-| No remote configured | Skip remote branch listing, skip fetch. Proceed with local branches only. |
-| Already up to date | Report "Already up to date." Exit. |
-| Conflicts detected | Present 5 resolution options (abort, inspect, manual, accept source, accept target). Wait for decision. |
-| Target branch checkout fails | Report error, offer to stash/commit first. |
-| No branches available to merge into | Inform user there's nowhere to merge to. |
-| Shallow clone | Warn that merge may require full history (`git fetch --unshallow`). |
-| Target branch ahead of remote | Warn that pushing after merge may require force push. |
-</failure_modes>
-
-## Validation Strategy
-
-<validation_strategy>
-- Verify `git status` shows clean state after merge (or conflicts clearly listed)
-- Verify `git log --oneline -n 3` shows merge commit
-- Verify merge direction correct (source merged into target)
-- Verify no auto-resolved conflicts
-</validation_strategy>
-
-## Relationships
-
-<relationships>
-- Depends on: Git repository with at least 2 branches
-- Consumed by: Post-merge workflow (push, branch cleanup, source deletion)
-- Complementary to: `sas-git-commit-and-push` (committing before merge, pushing after merge)
-</relationships>
-
-## Guarantees
-
-<guarantees>
-[P0] Conflicts never auto-resolved — user always chooses resolution.
-[P0] Merge direction always explicit: source → target.
-[P1] Pre-merge state restorable via abort option.
-[P2] Post-merge actions always offered, never forced.
-</guarantees>
+[P0] Must NOT push to remote without explicit user confirmation.
+[P0] Must NOT delete source branch without explicit user confirmation.
+[P0] Must NOT proceed if not in a git repository.
+[P0] Must NOT merge in detached HEAD state without warning.
+</Forbidden Usage>
 
 ---
 
-## Invocation Conditions
-
-<invocation_conditions>
-- User wants to merge branches, review merge options, or handle merge conflicts
-- Skill invoked interactively or directly with branch names (e.g., `/sas-git-merge feature/x -> develop`)
-</invocation_conditions>
-
-## Forbidden Usage
-
-<forbidden_usage>
-- Must NOT auto-resolve merge conflicts under any circumstance
-- Must NOT merge without presenting target branch options (unless direct invocation with explicit branches)
-- Must NOT proceed past conflicts without user decision
-- Must NOT force post-merge actions on user
-- Must NOT merge in detached HEAD state without warning
-</forbidden_usage>
-
-## Phase Separation
-
-<phase_separation>
-- This skill is fully implemented and operational.
-- No deferred features.
-</phase_separation>
+<Phase Separation>
+| Phase | Steps | Description |
+|---|---|---|
+| Phase 1: Pre-merge validation | Steps 1–3 | Verify repo state, check for conflicts/dirty tree/detached HEAD |
+| Phase 2: Branch selection | Steps 4–5 | Discover targets, user selects, confirm direction |
+| Phase 3: Merge execution | Steps 6–9 | Switch branch, select strategy, execute, handle conflicts |
+| Phase 4: Post-merge | Step 10 | Report state, offer push/branch-switch/delete/undo |
+</Phase Separation>
 
 ---
 
-## Execution Steps
+<Procedural Steps>
 
 ### Step 1: Repo Check
-
-<step1_repo_check>
-[P0] Run `git rev-parse --show-toplevel`.
-IF fails:
-  THEN inform user git operations not supported in current directory.
-  THEN exit.
-</step1_repo_check>
+[P1] Run `git rev-parse --show-toplevel`.
+[P1] If git rev-parse fails, inform user git operations not supported in current directory and exit.
 
 ### Step 1.5: Fetch Latest State
-
-<step1_5_fetch>
 [P1] Run `git fetch --prune`.
-IF no remote: skip silently.
-</step1_5_fetch>
+[P1] If no remote, skip fetch silently.
 
 ### Step 2: Pre-Merge State Check
-
-<step2_pre_merge>
-[P0] Check for in-progress merge:
-  Run `git status`. IF output mentions "merging" or merge in progress:
-    THEN inform user merge already in progress.
-    THEN present options:
-      1. `git merge --continue` — complete merge (requires conflicts resolved first)
-      2. `git merge --abort` — cancel and restore pre-merge state
-      3. Inspect conflict files — list conflicted files and show markers
-    THEN wait for user decision.
-
-[P0] Check for dirty working tree:
-  Run `git status --porcelain`. IF uncommitted changes:
-    THEN warn user.
-    THEN offer to stash (`git stash push -m "pre-merge stash"`) or commit first.
-    THEN wait for user decision.
-
-[P1] Check for detached HEAD:
-  Run `git branch --show-current`. IF empty: HEAD is detached.
-    THEN warn user merges in detached HEAD not recommended.
-    THEN offer to checkout a branch first.
-</step2_pre_merge>
+[P1] Run `git status`. IF merge in progress THEN inform user, present options (git merge --continue / git merge --abort / inspect conflict files), wait for decision.
+[P1] Run `git status --porcelain`. IF uncommitted changes THEN warn user, offer stash (`git stash push -m "pre-merge stash"`) or commit, wait for decision.
+[P1] Run `git branch --show-current`. IF empty (detached HEAD) THEN warn user, offer checkout branch first.
 
 ### Step 3: Branch Context
-
-<step3_branch_context>
-[P0] Run `git branch --show-current`.
-[P0] Report current branch to user — this is the SOURCE branch (whose changes will be merged into target).
-</step3_branch_context>
+[P1] Run `git branch --show-current` and report current branch as source branch.
 
 ### Step 4: Discover Target Branches
-
-<step4_discover_targets>
-[P1] Run `git branch --list --format='%(refname:short)'` — get clean branch names without `*` prefix.
-[P1] Filter out current branch from list.
+[P1] Run `git branch --list --format='%(refname:short)'`. Filter out current branch.
 [P2] Optionally include remote branches with `git branch -r --list --format='%(refname:short)'`.
-[P1] Present as numbered list, excluding current branch:
-
-  ```
-  Target branches (merge current branch into one of these):
-
-  Local branches:
-  1. develop
-  2. main
-
-  Remote branches:
-  3. origin/develop
-  4. origin/main
-  ```
-</step4_discover_targets>
+[P1] Present as numbered list excluding current branch, separated into Local and Remote sections.
 
 ### Step 5: User Selection
-
-<step5_user_selection>
-[P0] Wait for user to pick target branch from list.
-[P0] Confirm merge direction: `Merging <current-branch> into <target-branch>`.
-
-IF direct invocation with explicit branch names (e.g., `/sas-git-merge feature/x -> develop`):
-  THEN validate both branches exist.
-  THEN `<from-branch>` = source, `<into-branch>` = target.
-  IF current branch is `<into-branch>`: skip to Step 6 with source branch already known.
-  IF current branch is `<from-branch>`: proceed to Step 6.
-  IF current branch is neither: warn user, ask if they want to switch to `<into-branch>` first.
-</step5_user_selection>
+[P1] Wait for user pick. Confirm: Merging <current-branch> into <target-branch>.
+[P1] IF direct invocation with explicit branch names THEN validate both exist. IF current is into-branch THEN skip to Step 6. IF current is from-branch THEN proceed to Step 6. IF neither THEN warn and ask to switch to into-branch.
 
 ### Step 6: Switch to Target Branch
-
-<step6_switch_target>
-[P0] IF target branch is remote tracking branch (e.g., `origin/develop`):
-  THEN run `git fetch` to ensure up to date.
-[P0] Confirm switch with user: `Switching to <target-branch> to merge <source-branch> into it. Proceed?`
-[P0] Upon confirmation: run `git checkout <target-branch>`.
-IF checkout fails (e.g., dirty tree):
-  THEN report error, offer to stash/commit first.
-[P0] After checkout: verify `git branch --show-current` shows `<target-branch>`.
-</step6_switch_target>
+[P1] IF remote tracking branch THEN run `git fetch` first.
+[P1] Confirm switch: 'Switching to <target-branch> to merge <source-branch> into it. Proceed?'
+[P1] Upon confirmation, run `git checkout <target-branch>`.
+[P1] IF checkout fails THEN report error and offer stash/commit.
+[P1] Verify `git branch --show-current` shows <target-branch>.
 
 ### Step 7: Merge Strategy Selection
-
-<step7_strategy>
-[P1] Present merge strategy options:
-
-| Strategy | Flag | Behavior |
-|----------|------|----------|
-| Fast-forward (default) | *(none)* | Move HEAD forward without merge commit (fails if not possible) |
-| No fast-forward | `--no-ff` | Always create merge commit |
-| Fast-forward only | `--ff-only` | Fail if fast-forward not possible |
-| Squash | `--squash` | Stage changes only; user must commit manually |
-
-[P2] Offer dry-run preview: `git merge --no-commit --no-ff <source-branch>`.
-[P1] Ask user which strategy they prefer. IF unspecified: use default (fast-forward when available, otherwise merge commit).
-</step7_strategy>
+[P1] Present strategies: Fast-forward (default, no flag), No fast-forward (--no-ff), Fast-forward only (--ff-only), Squash (--squash).
+[P2] Offer dry-run: `git merge --no-commit --no-ff <source-branch>`.
+[P1] Ask strategy. IF unspecified THEN use default (fast-forward if possible).
 
 ### Step 8: Execute Merge
-
-<step8_execute_merge>
-[P0] Run `git merge <strategy-flags> <source-branch>`.
-
-IF clean merge (non-squash):
-  THEN report success, show merge commit message, proceed to Step 10.
-IF squash merge:
-  THEN changes staged but not committed.
-  THEN help user craft commit message (default: `Merge branch '<source-branch>' into <target-branch>`).
-  THEN run `git commit -m "<message>"`.
-  THEN proceed to Step 10.
-IF already up to date:
-  THEN report "Already up to date." Exit.
-IF conflicts:
-  THEN proceed to Step 9.
-</step8_execute_merge>
+[P1] Run `git merge <strategy-flags> <source-branch>`.
+[P1] IF clean non-squash merge THEN report success, show commit message, proceed to Step 10.
+[P1] IF squash merge THEN stage changes, help craft commit (default: `Merge branch '<source-branch>' into <target-branch>`), run `git commit`. Proceed to Step 10.
+[P1] IF already up to date THEN report and exit.
+[P1] IF conflicts THEN proceed to Step 9.
 
 ### Step 9: Conflict Handling
-
-<step9_conflicts>
-[P0] Must NOT auto-resolve conflicts.
-
-[P0] List conflicting files:
-  Run `git diff --name-only --diff-filter=U`.
-
-[P0] Present resolution options:
-
-| Option | Command | Effect |
-|--------|---------|--------|
-| Abort merge | `git merge --abort` | Cancel, restore pre-merge state |
-| Inspect conflicts | `git diff --name-only --diff-filter=U` | Display conflict markers in affected files |
-| Resolve manually | — | Guide through manual resolution, then `git add <file>` and `git merge --continue` |
-| Accept source version | `git checkout --theirs <file>` for all conflicted files | Accept incoming version |
-| Accept target version | `git checkout --ours <file>` for all conflicted files | Keep current version |
-
-[P0] Wait for user decision.
-IF user chooses manual resolution:
-  THEN show each conflicted file's content with conflict markers.
-  THEN guide through editing and marking resolved with `git add <file>`.
-  THEN once all resolved: run `git merge --continue`.
-</step9_conflicts>
+[P0] Do NOT auto-resolve conflicts.
+[P1] List conflicts: `git diff --name-only --diff-filter=U`.
+[P1] Present options:
+  1. Abort — `git merge --abort` (restore pre-merge state)
+  2. Inspect — show conflict files
+  3. Resolve manually — guide through resolution, `git add`, `git merge --continue`
+  4. Accept source (--theirs) for all conflicted files
+  5. Accept target (--ours) for all conflicted files
+[P1] IF manual resolution THEN show conflict markers, guide editing and `git add`, run `git merge --continue`.
 
 ### Step 10: Post-Merge
+[P1] Report: `git status` and `git log --oneline -n 3`.
+[P1] Offer push. IF yes THEN `git push`. IF no upstream THEN `git push --set-upstream origin <branch>`.
+[P1] Offer return to original branch: `git checkout <original-branch>`.
+[P1] Offer delete source branch: `git branch -d` (safe), `git push origin --delete` (remote). Only with explicit confirmation.
+[P1] Offer undo: `git reset --hard ORIG_HEAD` (warn about lost work).
 
-<step10_post_merge>
-[P1] Report final state:
-  Run `git status` and `git log --oneline -n 3`.
+</Procedural Steps>
 
-[P2] Offer to push to remote:
-  IF user agrees: run `git push`. IF no upstream: run `git push --set-upstream origin <branch>`.
+---
 
-[P2] Offer to switch back to original branch.
+<Edge Cases>
+1. [P1] IF no remote THEN skip remote branch listing (see Step 4) and fetch (see Step 1.5).
+2. [P1] IF already up to date THEN report and exit.
+3. [P1] IF detached HEAD THEN warn, recommend checkout branch first (see Step 2).
+4. [P1] IF shallow clone THEN warn about full history requirement (`git fetch --unshallow`).
+5. [P1] IF untracked files THEN include in dirty-tree warning (see Step 2); offer .gitignore.
+6. [P1] IF cross-repo subdirectory THEN operate from repo root (see Step 1).
+7. [P1] IF target ahead of remote THEN warn about force push requirement (see Step 10).
+8. [P1] IF only one branch THEN inform nowhere to merge to (see Step 4).
+</Edge Cases>
 
-[P2] Offer to delete source branch (optional):
-  IF user no longer needs source branch:
-    THEN offer `git branch -d <source-branch>` (safe delete, only if fully merged).
-    THEN offer `git push origin --delete <source-branch>` (delete remote too).
-    THEN proceed only with explicit confirmation.
+---
 
-[P2] Offer undo guidance:
-  IF user expresses regret or merge was mistaken:
-    THEN inform: `git reset --hard ORIG_HEAD` — undo merge commit (with warning about lost work).
-</step10_post_merge>
+<Examples>
+[P2] Interactive: 'merge my feature branch' → current branch is `feature/user-auth` → targets: develop, main, origin/develop → pick 1 → merge into develop, --no-ff → success, offer push.
+[P2] Direct: `/sas-git-merge feature/x -> develop` → validates, switches to develop, merges with default.
+[P2] Conflict: merge fix/urgent-hotfix into develop → conflicts in app/auth.py, tests/test_auth.py → present 5 options → wait for decision.
+</Examples>
