@@ -41,3 +41,6 @@ logs/
 
 # Agent prompts
 AgentPrompt.txt
+
+# Compilation intermediate files (reproducible build artifacts)
+*.compilation/
