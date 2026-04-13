@@ -76,12 +76,23 @@ NO! Fully optimized for machines. Human readability is NOT a concern for the out
 ---
 
 ### 9. Where should compiled files be saved? Same directory as source, separate output folder, or alongside originals with a suffix?
-**Answer:**  
+**Answer:**
 Same directory preferable with some kind of suffix to differentiate from source files. This allows for easy traceability between source and compiled versions while keeping them organized in the same location.
 
 For Skills:
 - The `SKILL.md` should be the compiled output
-- `SKILL.<Human-Readable-Extension>.md` should be the human readable source file (e.g., `SKILL.md` for compiled, `SKILL.human.md` for source)
+- `SKILL.human.md` should be the human readable source file
+
+For non-Skill documents:
+- Source: `{name}.md` (unchanged)
+- Compiled: `{name}.compiled.md`
+- Example: `design-doc.md` → `design-doc.compiled.md`
+
+**Naming rules:**
+- Always same directory as source
+- Skills use the special `SKILL.human.md` → `SKILL.md` mapping
+- All other documents append `.compiled` before the `.md` extension
+- If a `.compiled.md` file already exists, it is overwritten (no versioning, no suffix incrementing)
 
 ---
 
@@ -174,7 +185,7 @@ No. The agent is responsible for running the skill same as any other skill. The 
 ---
 
 ### 21. Should compiled files reference their source files (and vice versa) for traceability?
-**Answer:**  
+**Answer:**
 Yes. The compiled files should include a reference to their source files, such as a comment at the top indicating the original file name and location.
 
 This helps maintain traceability and allows users to easily identify the relationship between source and compiled versions.
@@ -182,6 +193,13 @@ This helps maintain traceability and allows users to easily identify the relatio
 But that is purely for traceability and MUST NOT interfere with the agents parsing of the compiled version.
 
 The reference should be formatted in a way that it can be easily ignored or skipped by AI agents during processing.
+
+**Implementation detail:**
+- Format: `<!-- compiled from: {relative_source_path} | {ISO 8601 timestamp} -->`
+- Placed as the very first line of the compiled file
+- HTML comment format ensures AI agents skip it naturally (comments are not rendered content)
+- Timestamp format: `YYYY-MM-DDTHH:mm:ssZ` (UTC)
+- Example: `<!-- compiled from: skills/sas-example/SKILL.human.md | 2026-04-13T14:30:00Z -->`
 
 ---
 
@@ -298,8 +316,15 @@ Compilation of a single document **MUST** be done from top to bottom in one pass
 ---
 
 ### 33. What is the minimum viable version of this skill? Should you start with a simpler transformation and iterate toward aggressive optimization, or build the full aggressive compiler from the start?
-**Answer:**  
-**AGGRESSIVE compiler from the start. Go big or GO HOME!**
+**Answer:**
+**AGGRESSIVE compiler from the start — but bootstrapped pragmatically.**
+
+Reconciled with the Bootstrap Strategy (takeaways doc):
+- **Design aggressively:** The pipeline architecture, transformation rules, and output format are all designed for the full 6-stage aggressive compiler from day one. No half-measures in the design.
+- **Implement pragmatically:** Build a working v1 that implements the full pipeline but with simpler transformation rules in Stage 4 (conservative strip/compress). Once the pipeline is functional and validation passes, use the compiler on its own SKILL.human.md to produce v2. Then iterate with increasingly aggressive Stage 4 passes.
+- **The key insight:** "Aggressive from the start" refers to the *architecture and ambition* — the full 6-stage pipeline, all validation, all constraint injection. "Bootstrap" refers to the *transformation aggressiveness* within Stage 4, which ramps up through self-compilation.
+
+This is NOT a contradiction — it's two dimensions: the pipeline is fully built (aggressive), but the transformation rules mature through iteration (bootstrap).
 
 ---
 
@@ -310,7 +335,7 @@ Yes. Then you can compare the timestamp of the original document with the compil
 ---
 
 ### 35. How should the skill handle nested or cross-referenced documents? (e.g., a SKILL.md that references another SKILL.md, or a plan that references framework documents)
-**Answer:**  
+**Answer:**
 A document that references another document **MUST** be compiled **WITH** the reference document.
 
 An example: A `.cpp` file that includes a `.h` file. The `.cpp` file cannot be compiled without the `.h` file.
@@ -319,6 +344,14 @@ Document references **MUST** be processed during preprocessing. If a document re
 
 - If the referenced document is found, it should be included in the compilation process to ensure that all relevant information is available for the final output.
 - If the referenced document is **NOT** found, the compilation process **MUST halt** and provide a clear error message indicating that the reference document is missing.
+
+**Implementation detail:**
+- **What constitutes a reference:** Any Markdown link (`[text](path/to/file.md)`) or explicit path mention (`see file.md`, `refer to path/file.md`) pointing to another `.md` file within the same repository
+- **Implicit references** ("see the SKILL.md for details", "as defined in the framework") are NOT resolved — only explicit file paths/links are processed
+- **Resolution depth:** Transitive — if A references B and B references C, all three are compiled together. Maximum depth: 5 levels (prevent infinite recursion / runaway compilation)
+- **Compilation order:** Referenced documents are compiled first (leaves), then the referencing document (root). This ensures all included content is already optimized before the parent document is processed
+- **Inclusion method:** Referenced document content is inlined during Stage 1 (Preprocessor) with a clear section boundary: `<!-- begin included: {path} -->` ... `<!-- end included: {path} -->`
+- **Circular reference detection:** If the preprocessor detects A→B→A or any cycle, it halts with `PRE_002` error
 
 ---
 
@@ -424,44 +457,197 @@ Source (.human.md)
 
 ---
 
-## Open Research Items
+## Open Research Items — RESOLVED
 
-*These questions remain unresolved. Each needs research, a decision, and an answer recorded below before the compiler can be fully implemented.*
+*All research items have been answered and all architecture specifications have been defined. No open items remain.*
 
-### R1. Structured Elements for AI Agents (relates to Q6, Q26)
-**Question:** What structured elements do AI agents find most useful? (e.g., XML tagging, JSON-LD, constraint-based formatting, priority markers)
+### R1. Structured Elements for AI Agents (relates to Q6, Q26) — ✅ RESOLVED
+**Answer:** XML-like tags for section boundaries, priority markers `[P0]`/`[P1]`/`[P2]`, IF/THEN/ELSE blocks, numbered lists, key-value pairs, negative constraints, cross-reference anchors. See A2 (IR Specification) for complete structured element definitions.
 
-**Current status:** Undecided — requires research.
+### R2. Output Format (relates to Q7) — ✅ RESOLVED
+**Answer:** Optimized Markdown with XML-like tags. No JSON/YAML conversion. Non-Skill documents use `.compiled.md` suffix. See R1 and A6 (Code Generation Mechanics).
 
-**Answer:**
-<!-- TODO: Research and document results -->
+### R3. Validation Methodology (relates to Q13, Q14, Q15, Q31, Q39) — ✅ RESOLVED
+**Answer:** Two-tier validation: Tier 1 (cheap structural check — section presence, declarative language, KERNEL compliance), Tier 2 (functional equivalence test — source vs. compiled produce same agent output, 90%+ threshold across 5+ tasks). Separate expensive verification skill for on-demand deep audits.
 
----
-
-### R2. Output Format (relates to Q7)
-**Question:** What format should the compiled output use? (JSON, YAML, custom markup, optimized markdown)
-
-**Current status:** Undecided — whatever format is most easily parsed by AI agents. May require research and experimentation.
-
-**Answer:**
-<!-- TODO: Research and document results -->
+### R4. Filler vs. Context Distinction Rules (relates to Q25) — ✅ RESOLVED
+**Answer:** 8-category classification table (verbose filler → remove, redundant restatement → remove, justification → compress, hedging → resolve, contextual reasoning → compress+preserve, examples → generalize, instructions → preserve+restructure, metadata → compress). Decision heuristic: "what to do?" → preserve, "why written?" → compress, "social lubricant" → remove.
 
 ---
 
-### R3. Validation Methodology (relates to Q13, Q14, Q15, Q31, Q39)
-**Question:** What specific validation checks should the post-compile routine perform? Structural checks are agreed upon as a starting point, but what does the functional equivalence test look like in practice?
+## Architecture Specifications
 
-**Current status:** Agreed that agent-based verification is the approach (Q39), and that original + compiled must produce the same AI agent output (Q31). The exact test design and implementation details need to be worked out.
+*These specifications define the 6-stage pipeline in implementation-level detail. They resolve the 7 architecture gaps flagged in the key takeaways document.*
 
-**Answer:**
-<!-- TODO: Design and document the cheap functional equivalence test + separate expensive analysis skill -->
+### A1. Document Structure Tree (DST) Specification
 
----
+The DST is a lightweight tree representation of the source markdown's block-level structure. Each node has:
 
-### R4. Filler vs. Context Distinction Rules (relates to Q25)
-**Question:** What are the specific, implementable rules for distinguishing "verbose filler" (safe to remove) from "contextual reasoning" (compress and preserve) during preprocessing?
+```
+DSTNode {
+  type: "heading" | "paragraph" | "list" | "ordered_list" | "table" | "code_block" | "blockquote" | "thematic_break" | "link" | "image" | "html"
+  level: int?              // For headings only (1-6)
+  content: string          // Raw text/markdown of the block
+  children: DSTNode[]      // For lists: items; for headings: following blocks until next heading of same/higher level
+  metadata: {
+    source_line: int       // Original line number for error reporting
+    section_path: string   // Full heading path (e.g., "Architecture > Compilation Pipeline")
+    semantic_role: string? // Added during Stage 3: "instruction" | "constraint" | "fact" | "example" | "rationale" | "edge_case" | "invariant" | "failure_mode" | "guarantee" | "input" | "output" | "relationship" | "validation" | "metadata" | "filler"
+  }
+}
+```
 
-**Current status:** Agreed that preprocessing is the technique, but the concrete rules for classification need to be defined so the preprocessor can apply them deterministically.
+**Node type handling:**
+- `heading` → section nodes, drives tree hierarchy
+- `paragraph` → text block nodes
+- `list` / `ordered_list` → list nodes with children as items
+- `table` → structured data node (preserved as markdown table)
+- `code_block` → preserved verbatim (language tag if present)
+- `blockquote` → treated as nested content
+- `thematic_break` (`---`) → section separator, discarded in Stage 3
+- `link` → preserved with URL extraction for cross-reference resolution
+- `image` → preserved with alt text and URL
+- `html` → preserved verbatim (may contain XML-like tags)
 
-**Answer:**
-<!-- TODO: Define clear rules/heuristics for classifying content as filler vs. contextual reasoning -->
+**Traversal interface:** Depth-first, pre-order. Parent pointer available for section context. Section boundaries determined by heading levels.
+
+### A2. Semantic IR Specification
+
+The IR flattens the DST into a linear sequence of semantic units with all markdown formatting stripped. Each IR unit:
+
+```
+IRUnit {
+  id: string                // Unique identifier (e.g., "sec-purpose-001")
+  type: "instruction" | "constraint" | "fact" | "example" | "rationale" | "edge_case" | "invariant" | "failure_mode" | "guarantee" | "input" | "output" | "relationship" | "validation" | "metadata" | "filler"
+  section: string           // Target section for constraint injection (e.g., "Purpose", "Constraints")
+  content: string           // Cleaned text, no markdown syntax
+  priority: "P0" | "P1" | "P2"  // P0 = must obey, P1 = important, P2 = nice-to-have
+  conditions: Condition[]   // IF/THEN/ELSE conditions that gate this unit
+  references: string[]      // IDs of other IRUnits this unit references
+  negation: boolean         // True if this is a negative constraint (what NOT to do)
+}
+
+Condition {
+  predicate: string         // The condition to check
+  then: IRUnit[]            // Units to include if true
+  else: IRUnit[]            // Units to include if false (may be empty)
+}
+```
+
+**Semantic role assignment (Stage 3):** Determined by keyword heuristics + structural context:
+- "must", "must not", "required", "forbidden" → `constraint`
+- "do", "run", "execute", "perform" → `instruction`
+- "is", "are", "defines" → `fact`
+- "for example", "e.g.", code examples → `example`
+- "because", "since", "rationale" → `rationale`
+- "if", "when", "unless", "edge case" → `edge_case`
+- "always", "invariant", "holds" → `invariant`
+- "fail", "error", "fallback" → `failure_mode`
+- "guarantee", "ensures", "commits" → `guarantee`
+- "input", "source", "precondition" → `input`
+- "output", "produces", "result" → `output`
+- "depends", "relates", "requires" → `relationship`
+- "verify", "validate", "test", "check" → `validation`
+- "version", "author", "date" → `metadata`
+- Everything else → classified by R4 filler rules
+
+### A3. Per-Stage I/O Contracts
+
+| Stage | Input | Output | Format |
+|-------|-------|--------|--------|
+| [1] Preprocessor | Source `.human.md` file path | Preprocessed source string + annotation map | `(string, Map<string, Annotation[]>)` |
+| [2] Structural Parse | Preprocessed source string | DST (root node with children) | `DSTNode` tree |
+| [3] Semantic IR Extraction | DST | Flat list of IRUnits | `IRUnit[]` |
+| [4] Optimization Passes | IRUnits | Transformed IRUnits (filtered, tagged, linked) | `IRUnit[]` |
+| [5] Semantic Constraint Injection | IRUnits | Augmented IRUnits with all 10 sections filled | `IRUnit[]` |
+| [6] Code Generation | Augmented IRUnits | Final `.compiled.md` file | `string` → written to disk |
+
+**Handoff mechanism:** Each stage receives the output of the previous stage as its sole input. No stage reads from disk directly (except Stage 1). No stage writes to disk directly (except Stage 6). Errors propagate up the chain — any stage failure aborts the pipeline and surfaces the error.
+
+### A4. Optimization Pass Details
+
+**Pass 1 — Strip & Compress:**
+- Remove all IRUnits with `type: "filler"` (per R4 rules)
+- Compress `type: "rationale"` units to single-line `[rationale: X]` format
+- Compress `type: "metadata"` units to single-line header format
+- Merge adjacent IRUnits of same type in same section into single unit
+- Strip decorative formatting from content (emphasis for tone, etc.)
+
+**Pass 2 — Tag & Structure:**
+- Assign explicit `id` to every IRUnit (format: `sec-{section}-{index}`)
+- Add `priority` markers: P0 for constraints/invariants/negative constraints, P1 for instructions/failure modes, P2 for examples/relationships
+- Convert conditional prose into explicit `Condition` objects on IRUnits
+- Add `negation: true` to units that express negative constraints
+- Wrap examples in generalized schema patterns
+
+**Pass 3 — Cross-Reference & Group:**
+- Resolve all `references` by matching explicit anchors/IDs to IRUnit IDs
+- Group related IRUnits by semantic affinity (constraints with their edge cases, instructions with their failure modes)
+- Add cross-reference links between sections (e.g., a constraint that references an invariant)
+- Deduplicate IRUnits with identical content in the same section
+
+### A5. Semantic Constraint Injection Mapping
+
+**Injection method:** Structural reorganization + template fill.
+
+**Process:**
+1. Group existing IRUnits by their `section` field into a `Map<string, IRUnit[]>`
+2. For each of the 10 universal sections (Purpose, Scope, Inputs, Outputs, Constraints, Invariants, Failure Modes, Validation, Relationships, Guarantees):
+   - If IRUnits exist for this section → use them, reorganize into canonical order
+   - If no IRUnits exist → inject an explicit placeholder: `<section_name> — This is currently unspecified and must be decided before use.`
+3. Add type-specific sections based on document type detection:
+   - Skill detection (has `name:` + `description:` in frontmatter) → add Invocation Conditions, Forbidden Usage, Phase Separation
+   - Plan detection (has timeline/milestone language) → add Data Model, Architecture, Key Operations
+4. Convert ALL IRUnit content to declarative language (apply R4 hedging resolution)
+5. Ensure at least one negative constraint exists — if none detected, inject: "Do not guess or imply defaults for unspecified behavior."
+6. Run KERNEL validation checklist against the section map
+
+### A6. Code Generation Mechanics
+
+**Method:** Template-based rendering from augmented IR.
+
+**Process:**
+1. Start with traceability header: `<!-- compiled from: {source_path} | {timestamp} -->`
+2. For each of the 10 universal sections (in canonical order):
+   - Emit `## {Section Name}`
+   - Emit `<{section_tag}>` XML-like wrapper
+   - For each IRUnit in the section:
+     - Emit priority marker if P0: `[P0] `
+     - Emit content as bullet point (for instructions/constraints) or prose (for facts/rationale)
+     - If `conditions` present: emit `IF {predicate} THEN ... ELSE ...`
+     - If `negation: true`: emit with explicit negative framing
+   - Emit `</{section_tag}>`
+3. Emit type-specific sections the same way
+4. Write to `{output_path}`
+
+**Format choice impact:** Since output is Markdown with XML tags (R1/R2 decision), the generator emits markdown syntax (headings, bullets, tables) wrapped in XML-like tags for section-level strictness. No JSON/YAML serialization needed.
+
+### A7. Per-Stage Error Handling
+
+**Error model:** Every stage returns either `Success(output)` or `Error(stage_name, code, message, context)`.
+
+**Error codes by stage:**
+
+| Stage | Error Code | Meaning |
+|-------|-----------|---------|
+| [1] Preprocessor | `PRE_001` | Referenced file not found |
+| | `PRE_002` | Conflicting/contradictory instructions detected |
+| | `PRE_003` | Ambiguous reference (multiple possible targets) |
+| | `PRE_004` | Invalid directive syntax |
+| [2] Structural Parse | `DST_001` | Malformed markdown (unclosed block) |
+| | `DST_002` | Empty document (no parseable content) |
+| [3] Semantic IR Extraction | `IR_001` | Unable to classify content into any semantic role |
+| | `IR_002` | Circular reference detected |
+| [4] Optimization | `OPT_001` | All content classified as filler (nothing to preserve) |
+| | `OPT_002` | Priority conflict (two P0 constraints contradict) |
+| [5] Constraint Injection | `SCI_001` | Too many unspecified sections (>3 universal sections empty) |
+| | `SCI_002` | KERNEL validation failed (specify which principle) |
+| [6] Code Generation | `GEN_001` | Output path not writable |
+| | `GEN_002` | Template rendering failure |
+
+**Error propagation:**
+- Any error → pipeline halts immediately
+- Error message displayed to user with: stage name, error code, human-readable description, and source location (line number from DST metadata)
+- Temporary preprocessing document (if created) is cleaned up on error
+- No partial output is written to disk
+- User must fix source and retry
