@@ -14,8 +14,8 @@ For a source document `DocX.human.md` located in directory `X/`, the compilation
 
 ```
 X/
-├── DocX.human.md              ← source document (human-edited)
-├── DocX.md                    ← compiled output (final artifact)
+├── DocX.human.md               ← source document (human-edited)
+├── DocX.compiled.md            ← compiled output (final artifact)
 └── .DocX.compilation/
     ├── stage-1-preprocessor/
     │   ├── preprocessed.md        ← source with macros expanded, files included
