@@ -1,134 +1,79 @@
-# sas-git-merge — Implementation Plan
+# sas-git-merge — Implementation Closeout Report
 
-## Overview
+**Date:** April 2026
+**Status:** Implemented and in production
+**Skill location:** `skills/sas-git-merge/`
 
-This document captures the implementation plan for the `sas-git-merge` skill, which provides a guided, safe workflow for merging branches with user control at every decision point.
+---
 
-## Skill File Structure
+## Objective
 
-```
-skills/sas-git-merge/
-├── SKILL.md        ← Main instructions + 10-step execution flow
-└── reference.md    ← Merge strategies, conflict resolution, git command reference, edge cases
-```
+Build a guided, interactive branch-merge skill that keeps the user in control at every decision point — discovers targets, presents options, never auto-resolves conflicts.
 
-## Core Direction
+---
 
-The skill merges the **current branch (source)** into a **target branch** the user selects. This means the skill checks out the target branch first, then runs `git merge <source-branch>` on it.
+## What Was Delivered
 
-## Requirements (from AgentPrompt.txt)
+### Skill Files
+- `skills/sas-git-merge/SKILL.md` — compiled output (Semantic Constraint Framework)
+- `skills/sas-git-merge/SKILL.human.md` — human-editable source
 
-1. **Repo check** — verify the root directory is a git repo; warn and exit if not.
-2. **Branch check** — report the current branch the user is on.
-3. **Available branches check** — discover branches available for merge (local + remote, not yet merged).
-4. **Show branch list** — present a numbered, selectable list to the user.
-5. **Execute merge** — once the user selects a branch, attempt the merge.
-6. **Direct invocation** — support `/sas-git-merge <from-branch> -> <into-branch>`.
-7. **Conflict handling** — never auto-resolve; present the user with options including aborting the merge.
+### Core Direction
+The skill merges the **current branch (source)** into a **target branch** the user selects. It checks out the target branch first, then runs `git merge <source-branch>` on it.
 
-## Additional Considerations Added
+### 10-Step Execution Flow
+1. **Repo check:** `git rev-parse --show-toplevel` — exit if not a git repo
+2. **Pre-merge safety:** checks for in-progress merge, dirty working tree, detached HEAD — offers stash/commit/checkout before proceeding
+3. **Branch context:** reports current branch as source
+4. **Discover targets:** `git branch --list` + `git branch -r` — presents numbered list grouped by local/remote
+5. **User selection:** confirms merge direction ("Merging X into Y"); supports direct invocation (`/sas-git-merge from -> into`)
+6. **Switch to target:** `git checkout <target>` — verifies with `git branch --show-current`, offers stash/commit on failure
+7. **Strategy selection:** presents 4 options (fast-forward, --no-ff, --ff-only, --squash) + dry-run preview; default is fast-forward
+8. **Execute:** `git merge <flags> <source>` — handles clean, up-to-date, conflicts, squash
+9. **Conflict handling:** lists conflicted files via `git diff --name-only --diff-filter=U`, presents 5 options (abort, inspect, resolve manually, accept theirs, accept ours), waits for user decision — **never auto-resolves**
+10. **Post-merge:** reports `git status` + `git log --oneline -n 3`, offers push, offers return to original branch, offers delete source, offers undo (`git reset --hard ORIG_HEAD`)
 
-- **Pre-merge safety check** — check for dirty working tree; offer to stash or commit first.
-- **Merge strategy options** — support `--no-ff`, `--ff-only`, `--squash`; default to fast-forward.
-- **Post-merge push** — offer to push to remote after a successful merge.
-- **Remote branch support** — allow merging from/to remote tracking branches.
-- **Already-in-merge state** — handle incomplete merges; offer `--abort` or `--continue`.
-- **Dry-run preview** — `git merge --no-commit --no-ff` for preview before committing.
-- **Detached HEAD warning** — warn user if HEAD is detached.
-- **Undo guidance** — provide `git reset --hard ORIG_HEAD` as an escape hatch.
-- **Cross-repo subdirectory awareness** — use `git rev-parse --show-toplevel`.
-- **Quick resolution options** — "accept ours" / "accept theirs" for all conflicts at once.
-
-## 9-Step Execution Flow
-
-### Step 1: Repo Check
-- Run `git rev-parse --show-toplevel`.
-- If it fails, inform user git operations are not supported and exit.
-
-### Step 2: Pre-Merge State Check
-- **In-progress merge:** If `git status` mentions "merging", present options (`--continue`, `--abort`, inspect conflicts).
-- **Dirty working tree:** If `git status --porcelain` shows changes, warn user and offer to stash or commit.
-- **Detached HEAD:** If `git branch --show-current` is empty, warn and recommend checking out a branch.
-
-### Step 3: Branch Context
-- Report current branch via `git branch --show-current`.
-- This branch is the **source branch** (its changes will be merged into the target).
-
-### Step 4: Discover Target Branches
-- Local: `git branch` (exclude current branch)
-- Remote: `git branch -r` (optional)
-- Present as a numbered list grouped by local and remote.
-
-### Step 5: User Selection
-- Wait for user to pick a target branch.
-- Confirm merge direction: `Merging <current-branch> into <target-branch>`.
-- **Direct invocation:** If invoked with `<from-branch> -> <into-branch>`, validate both branches exist, then proceed to Step 6.
-
-### Step 6: Switch to Target Branch
-- Run `git checkout <target-branch>`.
-- If checkout fails (dirty tree), offer to stash/commit first.
-- Verify with `git branch --show-current`.
-
-### Step 7: Merge Strategy Selection
-Present options:
-
-| Strategy | Flag | Behavior |
-|---|---|---|
-| Fast-forward (default) | *(none)* | Move HEAD forward if possible |
-| No fast-forward | `--no-ff` | Always create a merge commit |
-| Fast-forward only | `--ff-only` | Fail if fast-forward is not possible |
-| Squash | `--squash` | Combine all changes into a single commit |
-
-Also offer dry-run: `git merge --no-commit --no-ff <branch>`.
-
-### Step 8: Execute Merge
-- Run `git merge <strategy-flags> <source-branch>`.
-- **Clean merge:** Report success → Step 10.
-- **Already up to date:** Report and exit.
-- **Conflicts:** → Step 9.
-
-### Step 9: Conflict Handling
-**The agent must NOT auto-resolve conflicts.**
-
-1. List conflicting files: `git diff --name-only --diff-filter=U`.
-2. Present options:
-
-| Option | Effect |
-|---|---|
-| Abort merge | Restore pre-merge state |
-| Inspect conflicts | Show conflict markers in affected files |
-| Resolve manually | Guide user through editing, `git add`, then `git merge --continue` |
-| Accept incoming (theirs) | Accept merged-in branch's version for all conflicts |
-| Accept current (ours) | Keep current branch's version for all conflicts |
-
-3. Wait for user decision.
-
-### Step 10: Post-Merge
-- Report final state: `git status`, `git log --oneline -n 3`.
-- Offer to push to remote.
-- Offer to switch back to the original branch.
-- Provide undo guidance (`git reset --hard ORIG_HEAD`).
-
-## Edge Cases
-
+### Edge Cases Handled
 | Scenario | Handling |
 |---|---|
-| No remote configured | Skip remote branch listing |
+| No remote | Skip remote listing and fetch |
 | Already up to date | Report and exit |
-| Detached HEAD | Warn; recommend checkout |
-| Shallow clone | Warn; suggest `git fetch --unshallow` |
-| Untracked files | Include in dirty-tree warning |
-| Cross-repo subdirectory | Use `git rev-parse --show-toplevel` |
-| Submodules | Recommend `git submodule update --init --recursive` after merge |
-| Case-insensitive filesystems | Note spurious conflict risk on Windows/macOS |
-| Large binary files | Recommend `--ours`/`--theirs` or manual file replacement |
+| Detached HEAD | Warn, recommend checkout |
+| Shallow clone | Warn, suggest `git fetch --unshallow` |
+| Untracked files | Include in dirty-tree warning, offer .gitignore |
+| Cross-repo subdirectory | Operate from repo root (`git rev-parse --show-toplevel`) |
+| Target ahead of remote | Warn about force-push requirement |
+| Only one branch | Inform nowhere to merge to |
 
-## reference.md Contents
+### Key Design Decisions
+- **User control at every decision point:** P0 invariant — no automatic branch selection, conflict resolution, or push without explicit consent
+- **Never auto-resolve conflicts:** P0 constraint enforced in `<rules>`, `<forbidden_usage>`, and Step 9
+- **Pre-merge state always restorable:** via `git merge --abort`
+- **Core direction clarity:** "merge current branch INTO target branch" — prevents the common confusion of merging in the wrong direction
+- **Direct invocation support:** `/sas-git-merge <from> -> <into>` validates both branches exist, then proceeds without interactive selection
 
-The companion reference document covers:
+---
 
-1. **Merge Strategy Comparison** — table comparing fast-forward, `--no-ff`, `--ff-only`, `--squash` with ASCII diagrams.
-2. **Conflict Resolution Walkthrough** — how git marks conflicts, step-by-step manual resolution, quick resolution for all conflicts.
-3. **Git Command Reference** — grouped tables for Discovery, State Checks, Merge Operations, Undo, and Push commands.
-4. **Safety Notes** — rationale for why the agent never auto-resolves conflicts, importance of clean working tree, ORIG_HEAD caveats.
-5. **Edge Case Details** — shallow clones, submodules, case-insensitive filesystems, large binary files.
+## Validation
+
+- Compiled through 6-stage pipeline (Phase 2)
+- Recompiled with aggressive redundancy elimination (Phase 4) — now 39% of source size (3.8 KB vs 9.5 KB source), the most aggressive compression of any skill
+- Tier 2 functional equivalence: 5/5 benchmark tasks PASS (happy path, detached HEAD, no auto-resolve conflicts, dirty tree, full merge with post-merge)
+- Verify skill audit: all 6 audit passes PASS (content coverage, constraint sufficiency, conflict detection, edge case coverage, instruction fidelity, semantic drift)
+
+---
+
+## Related Commits
+
+| Commit | Description |
+|--------|-------------|
+| `51698c0` | Initial skill creation |
+| `8dd8770` | Fix merge direction — current branch is source, not target |
+| `a2e2bbb` | Improve accuracy, clarity, and completeness |
+| `944de17` | Review fixes applied |
+| `6f71906` | Phase 2 compilation |
+| `0bbaeb5` | Phase 4 recompilation — aggressive redundancy elimination |
+
+---
+
+*Implementation complete. Skill operational and committed.*
