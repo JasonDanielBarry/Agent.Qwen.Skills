@@ -37,9 +37,9 @@
 
 ## Phase 4 — Aggressive Optimization (v3.0+)
 
-- Add Tier 2 functional equivalence validation
+- ~~Add Tier 2 functional equivalence validation~~ **DONE — Step 6 complete**
+- ~~Add the separate expensive verification skill~~ **DONE — Step 7 complete (`sas-semantic-compiler-verify`)**
 - Refine filler classification rules based on real-world results
-- Add the separate expensive verification skill
 - Push transformation aggressiveness to the limit
 
 ---

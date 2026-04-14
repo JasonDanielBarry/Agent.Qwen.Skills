@@ -136,16 +136,44 @@ Any error → pipeline halts immediately. Error reported with stage name, code, 
 
 ### Tier 2 — Functional Equivalence Test (automatic, agent-based, pass/fail)
 
-- Give AI agent the source document and ask it to perform a representative task
-- Give separate AI agent the compiled document and ask the identical task
-- Compare outputs: if both agents produce semantically equivalent results, test passes
-- Threshold: 90%+ task equivalence across 5+ benchmark tasks
-- Fail = compilation fails, user shown which tasks diverged and why
+Runs after Tier 1 passes. Validates that compiled SKILL.md is functionally equivalent to source SKILL.human.md by executing both through identical benchmark tasks and comparing agent behavior.
+
+**Execution flow:**
+1. Grader agent loads both documents (SKILL.human.md + SKILL.md)
+2. For each benchmark task in `benchmarks/tier-2-benchmarks.md`:
+   a. Spawn Source Agent → load SKILL.human.md → execute task → capture actions/output
+   b. Spawn Compiled Agent → load SKILL.md → execute identical task → capture output
+   c. Grade: compare both against rubric → PASS / FAIL per criterion
+   d. Task passes if ALL criteria pass
+3. Aggregate: compute pass rate across all tasks
+4. Threshold check: ≥95% → Tier 2 PASS; <95% → Tier 2 FAIL
+
+**Benchmark suite:** 25 tasks total (5 per skill × 5 skills). See `benchmarks/tier-2-benchmarks.md` for full definitions.
+
+**Capability dimensions tested per skill:**
+- **Happy Path** — normal invocation, correct execution under standard conditions
+- **Edge Case** — unusual input state, proper boundary condition handling
+- **Constraint Obedience** — P0 constraint enforcement, invariant preservation
+- **Failure Mode** — error scenario, correct response when things go wrong
+- **Multi-Step** — full procedural sequence, complete step-by-step execution in order
+
+**Semantic equivalence** means: same actions taken, same constraints obeyed, same invariants preserved, same output structure — NOT identical text.
+
+**Stochastic handling:** If a task fails on first run, re-run once to check for stochastic false negatives. Second-run pass → marked FLAKY (pass but flagged). Both runs fail → hard FAIL.
+
+**Threshold:** 95%+ task equivalence across the benchmark suite (max 1 failure in 25-task suite). If threshold not met during early runs, may be dialed back to 90%.
+
+**Fail =** compilation fails, user shown divergence report with: which tasks failed, which criteria failed per task, source vs compiled agent behavior side-by-side, root cause hypothesis.
+
+**Result format:** JSON output written to `benchmarks/results/tier2-result-YYYYMMDD-HHmmss.json` with per-task status, per-criterion results, pass rate, and overall Tier 2 result. See benchmark document for full JSON schema.
 
 ### Separate Verification Skill (expensive, on-demand)
 
-- Dedicated skill for deep analysis: full content coverage audit, constraint sufficiency check, conflict detection, edge case coverage
+- ~~Dedicated skill for deep analysis~~ **DONE — Phase 4 Step 7 complete**
+- Skill created: `sas-semantic-compiler-verify`
+- 6 audit passes: content coverage, constraint sufficiency, conflict detection, edge case coverage, instruction fidelity, semantic drift
 - Not part of normal compilation pipeline — invoked manually for quality audits
+- Output: verification report at `.verification/verify-<skill-name>-YYYYMMDD-HHmmss.md` with per-pass PASS/FAIL/WARNING and overall verdict
 </validation_strategy>
 
 ## Relationships
@@ -229,9 +257,9 @@ Every sub-agent follows: **Spawn → Load → Process → Write → Terminate**
 | Stage 4 Pass 3 (cross-reference resolution) | Implemented (Phase 2) |
 | XML-like tag wrapping | Implemented (Phase 2) |
 | Tier 1 structural validation | Implemented (Phase 2) |
-| Tier 2 functional equivalence | Deferred Phase 4 |
+| Tier 2 functional equivalence | Implemented (Phase 4 Step 6) |
 | Self-compilation | In Progress (Phase 3) |
-| Separate verification skill | Deferred Phase 4 |
+| Separate verification skill | Implemented (Phase 4 Step 7) |
 </phase_separation>
 
 ---

@@ -454,11 +454,29 @@ When merging adjacent IRUnits of the same type in the same section, the followin
 
 **Allowed merges:** Adjacent units that are truly redundant restatements, or units that express the same constraint from the same angle with no distinct condition. When in doubt, do not merge.
 
+### Aggressive Redundancy Elimination (Pass 1 — Strip & Compress)
+
+The following rules eliminate SCF wrapper bloat that inflates compiled output beyond source size:
+
+| Rule | Action | Rationale |
+|---|---|---|
+| **Merge Constraints + Invariants + Forbidden Usage** | Consolidate into single `<Rules>` section. Each distinct rule stated ONCE with: direction (MUST/MUST NOT), priority [P0/P1/P2], and condition. Merge positive/negative formulations of same rule into one. | Source skills state same rule 3-6× across Constraints/Invariants/Forbidden Usage. One formulation is sufficient. |
+| **Remove `<Instructions>` section** | Do NOT output a separate `<Instructions>` section. The `<Steps>` or `<Phase Separation>` section already contains the procedural flow. | `<Instructions>` is always a summary or IF/THEN re-render of content already in Steps. Adds zero new information. |
+| **Remove `<Invocation Conditions>` section** | Do NOT output `<Invocation Conditions>`. The skill description and `<Purpose>` section already capture when to invoke. | Restates what the description field already says. Not actionable during execution. |
+| **Remove `<Relationships>` section** | Do NOT output `<Relationships>`. Dependencies are implicit in the skill's behavior. | Meta-documentation, not agent-executable instructions. |
+| **Remove `<Guarantees>` section** | Do NOT output `<Guarantees>`. Guarantees are restatements of invariants. | "Pre-merge state restorable" (Guarantee) = same as invariant. One formulation sufficient. |
+| **Remove `<Validation Strategy>` from compiled output** | Do NOT output `<Validation Strategy>`. This is compiler metadata about how the compiled output was verified. | Agent does not need to know how the compiler verified its own output. |
+| **Collapse `<Scope>`, `<Inputs>`, `<Outputs>`** | Each to single-line summary. Target + exclusion in one line. | Useful for classification but verbose in compiled output. |
+| **Merge Failure Modes into Steps** | Inline error handling within the procedural step that encounters it. Do NOT maintain a separate `<Failure Modes>` section. | Source already structures error handling inline with steps. "Step 1: Check .git. If missing → error + exit." |
+| **De-duplicate tables** | If same table appears in source and is re-extracted, keep only one instance. | Conventional Commit Types table appearing twice wastes ~400 bytes. |
+
+**Expected result:** Compiled output should be **smaller than source** for most skills. Every constraint, invariant, failure mode, and procedural step remains present — stated once rather than 3-6 times.
+
 ---
 
 ## 10 Universal Required Sections
 
-Every compiled output MUST include all 10 universal sections:
+Every compiled output MUST include all 10 universal sections during IR processing:
 
 1. **Purpose** — why this artifact exists
 2. **Scope** — what it covers and what it excludes
@@ -471,7 +489,9 @@ Every compiled output MUST include all 10 universal sections:
 9. **Relationships** — dependencies, ordering, and boundaries with other artifacts
 10. **Guarantees** — postconditions the artifact commits to
 
-Plus **type-specific sections** (Skills have Invocation Conditions/Forbidden Usage/Phase Separation; Plans have Data Model/Architecture/Key Operations/etc.)
+**Stage 4 elimination (skills only):** For compiled SKILL.md output, the following sections are removed by Aggressive Redundancy Elimination rules: `<Instructions>`, `<Invocation Conditions>`, `<Relationships>`, `<Guarantees>`, `<Validation Strategy>`. These are processed during IR extraction (for analysis) but not emitted in final output. `<Constraints>`, `<Invariants>`, and `<Forbidden Usage>` are merged into single `<Rules>` section. `<Failure Modes>` are inlined into procedural steps. `<Scope>`, `<Inputs>`, `<Outputs>` compressed to single lines.
+
+Plus **type-specific sections** (Skills have Phase Separation; Plans have Data Model/Architecture/Key Operations/etc.)
 
 ---
 
@@ -575,16 +595,44 @@ Same meaning, different surface. The compiler controls the dial.
 
 ### Tier 2 — Functional Equivalence Test (runs automatically, agent-based, pass/fail)
 
-- Give an AI agent the source document and ask it to perform a representative task
-- Give a separate AI agent the compiled document and ask the identical task
-- Compare outputs: if both agents produce semantically equivalent results, the test passes
-- Threshold: 90%+ task equivalence across a benchmark suite of 5+ representative tasks
-- Fail = compilation fails, user shown which tasks diverged and why
+Runs after Tier 1 passes. Validates that the compiled SKILL.md is functionally equivalent to the source SKILL.human.md by executing both through identical benchmark tasks and comparing agent behavior.
+
+**Execution flow:**
+1. Grader agent loads both documents (SKILL.human.md + SKILL.md)
+2. For each benchmark task in `benchmarks/tier-2-benchmarks.md`:
+   a. Spawn Source Agent → load SKILL.human.md → execute task → capture actions/output
+   b. Spawn Compiled Agent → load SKILL.md → execute identical task → capture output
+   c. Grade: compare both against rubric → PASS / FAIL per criterion
+   d. Task passes if ALL criteria pass
+3. Aggregate: compute pass rate across all tasks
+4. Threshold check: ≥95% → Tier 2 PASS; <95% → Tier 2 FAIL
+
+**Benchmark suite:** 25 tasks total (5 per skill × 5 skills). See `benchmarks/tier-2-benchmarks.md` for full definitions.
+
+**Capability dimensions tested per skill:**
+- **Happy Path** — normal invocation, correct execution under standard conditions
+- **Edge Case** — unusual input state, proper boundary condition handling
+- **Constraint Obedience** — P0 constraint enforcement, invariant preservation
+- **Failure Mode** — error scenario, correct response when things go wrong
+- **Multi-Step** — full procedural sequence, complete step-by-step execution in order
+
+**Semantic equivalence** means: same actions taken, same constraints obeyed, same invariants preserved, same output structure — NOT identical text.
+
+**Stochastic handling:** If a task fails on first run, re-run once to check for stochastic false negatives. Second-run pass → marked FLAKY (pass but flagged). Both runs fail → hard FAIL.
+
+**Threshold:** 95%+ task equivalence across the benchmark suite (max 1 failure in 25-task suite). If threshold not met during early runs, may be dialed back to 90%.
+
+**Fail =** compilation fails, user shown divergence report with: which tasks failed, which criteria failed per task, source vs compiled agent behavior side-by-side, root cause hypothesis.
+
+**Result format:** JSON output written to `benchmarks/results/tier2-result-YYYYMMDD-HHmmss.json` with per-task status, per-criterion results, pass rate, and overall Tier 2 result. See benchmark document for full JSON schema.
 
 ### Separate Verification Skill (expensive, on-demand)
 
-- Dedicated skill for deep analysis: full content coverage audit, constraint sufficiency check, conflict detection, edge case coverage
+- ~~Dedicated skill for deep analysis~~ **DONE — Phase 4 Step 7 complete**
+- Skill created: `sas-semantic-compiler-verify`
+- 6 audit passes: content coverage, constraint sufficiency, conflict detection, edge case coverage, instruction fidelity, semantic drift
 - Not part of the normal compilation pipeline — invoked manually for quality audits
+- Output: verification report at `.verification/verify-<skill-name>-YYYYMMDD-HHmmss.md` with per-pass PASS/FAIL/WARNING and overall verdict
 
 ---
 
@@ -615,9 +663,9 @@ Same meaning, different surface. The compiler controls the dial.
 
 ### Phase 4 — Aggressive Optimization (v3.0+)
 
-- Add Tier 2 functional equivalence validation
+- ~~Add Tier 2 functional equivalence validation~~ **DONE — Step 6 complete**
+- ~~Add the separate expensive verification skill~~ **DONE — Step 7 complete (`sas-semantic-compiler-verify`)**
 - Refine filler classification rules based on real-world results
-- Add the separate expensive verification skill
 - Push transformation aggressiveness to the limit
 
 **Key principle:** Each phase produces a working, usable compiler. The pipeline architecture never changes — only the transformation rules within Stage 4 and the validation rigor increase.
