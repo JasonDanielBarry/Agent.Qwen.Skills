@@ -349,12 +349,18 @@ Condition {
 
 ### Stage 6 — Code Generation
 
+**Output path resolution:**
+- Always same directory as source file. Never relocate to a different directory (e.g., never force output into `skills/`).
+- Skills (`SKILL.human.md`): output is `SKILL.md` in same directory.
+- All other documents (`{name}.md`): output is `{name}.compiled.md` in same directory.
+- If resolved path exists, overwrite it.
+
 **Method:** Template-based rendering from augmented IR.
 
 1. Emit traceability header: `<!-- compiled from: {source_path} | {timestamp} -->`
 2. For each of the 10 universal sections (canonical order): emit `## {Section Name}`, emit `<{section_tag}>` wrapper, emit each IRUnit (priority marker for P0, bullet for instructions/constraints, prose for facts/rationale, `IF/THEN/ELSE` if conditions present, negative framing if `negation: true`), emit `</{section_tag}>`
 3. Emit type-specific sections the same way
-4. Write to `{output_path}`
+4. Write to resolved `{output_path}` in same directory as source.
 
 **Error codes:**
 
