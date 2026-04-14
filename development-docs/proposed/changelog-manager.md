@@ -46,3 +46,4 @@ A skill that automatically generates, maintains, and formats CHANGELOG files bas
 - Should support monorepo structures with per-package changelogs
 - Must handle edge cases like reverted commits and cherry-picks
 - Should validate semantic versioning bumps
+

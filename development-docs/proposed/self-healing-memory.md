@@ -1,6 +1,6 @@
 # Self-Healing Memory — Research Findings
 
-> **Goal:** Evaluate feasibility of building a "Self-Healing Memory" skill for Qwen Code agents.
+> **Goal:** Evaluate feasibility of building a "Self-Healing Memory" skill for Gemini CLI agents.
 > **Date:** 10 April 2026
 
 ---
@@ -221,7 +221,7 @@ Memory tagged with source, timestamp, version →
 
 ---
 
-## 7. Feasibility Assessment for Qwen Code Skill
+## 7. Feasibility Assessment for Gemini CLI Skill
 
 ### 7.1 What's Feasible
 
@@ -234,18 +234,18 @@ Memory tagged with source, timestamp, version →
 | **Verification against live codebase** | ✅ High | Agent reads cited files, compares to memory |
 | **Real-time conflict resolution** | ✅ High | Agent updates memory when conflict detected |
 | **Deduplication & contradiction detection** | ⚠️ Medium | Requires agent attention; not automated background process |
-| **Scheduled consolidation** | ⚠️ Medium | No native scheduler in Qwen Code; could use loop skill |
+| **Scheduled consolidation** | ⚠️ Medium | No native scheduler in Gemini CLI; could use loop skill |
 | **Transcript logging (append-only)** | ✅ High | Simple file append per session |
 
 ### 7.2 What's NOT Feasible (as a Skill)
 
 | Component | Why Not | Alternative |
 |---|---|---|
-| **Background agent (autoDream equivalent)** | Qwen Code skills don't run independently | Manual consolidation trigger; `/loop` skill for scheduling |
+| **Background agent (autoDream equivalent)** | Gemini CLI skills don't run independently | Manual consolidation trigger; `/loop` skill for scheduling |
 | **Vector store indexing** | Requires external infrastructure | Out of scope for file-based skill |
 | **Knowledge graph** | Requires external database | Out of scope |
 | **RL-optimized memory management** | Requires training infrastructure | Out of scope |
-| **Forked subagent isolation** | Qwen Code doesn't support subagent forking | Trust agent discipline; use separate session for consolidation |
+| **Forked subagent isolation** | Gemini CLI doesn't support subagent forking | Trust agent discipline; use separate session for consolidation |
 
 ### 7.3 Proposed Skill Architecture
 
@@ -290,7 +290,7 @@ skills/sas-self-healing-memory/
 
 ## 9. Conclusion
 
-Self-healing memory is **feasible as a Qwen Code skill** with the following constraints:
+Self-healing memory is **feasible as a Gemini CLI skill** with the following constraints:
 
 - **Core mechanism** (verification-first retrieval + conflict resolution) can be encoded in SKILL.md instructions
 - **Memory structure** (Index + Topic Files + Transcripts) maps cleanly to markdown files
@@ -302,3 +302,4 @@ The skill would focus on **encoding the write discipline, verification rules, an
 **Skill name:** `sas-self-healing-memory` (follows `sas-` prefix convention)
 
 **Next step:** Draft the `sas-self-healing-memory` skill based on this research.
+

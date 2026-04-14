@@ -46,3 +46,4 @@ A skill that automatically detects, runs, and configures linting and formatting 
 - Should distinguish between errors, warnings, and style suggestions
 - Must understand when auto-fix is safe vs. when manual review is needed
 - Should integrate with CI/CD pipelines without breaking builds
+

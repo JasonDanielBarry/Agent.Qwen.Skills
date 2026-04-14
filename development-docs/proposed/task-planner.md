@@ -8,7 +8,7 @@ A skill that breaks down high-level requirements and features into actionable, s
 - Identifies dependencies between tasks and suggests execution order
 - Estimates complexity and flags risky or ambiguous requirements
 - Generates acceptance criteria for each task
-- Creates todo lists compatible with Qwen Code's todo_write tool
+- Creates todo lists compatible with Gemini CLI's todo_write tool
 - Tracks task progress and updates status automatically
 - Suggests parallel execution opportunities
 - Identifies missing information or unclear requirements
@@ -41,10 +41,11 @@ A skill that breaks down high-level requirements and features into actionable, s
 - "Create a phased rollout plan for this migration"
 
 ## Technical Considerations
-- Must integrate with Qwen Code's built-in todo_write tool
+- Must integrate with Gemini CLI's built-in todo_write tool
 - Should support task hierarchies (epics → tasks → subtasks)
 - Needs to handle both sequential and parallel task execution
 - Must persist task state across sessions (via sas-endsession/sas-reattach)
 - Should link to external project management tools (Jira, Linear, GitHub Projects)
 - Must support task re-prioritization and scope changes
 - Should validate task completeness before marking features done
+

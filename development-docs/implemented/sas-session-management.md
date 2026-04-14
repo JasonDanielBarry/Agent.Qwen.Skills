@@ -8,7 +8,7 @@
 
 ## Objective
 
-Build two complementary skills for session handoff between separate Qwen Code interactions:
+Build two complementary skills for session handoff between separate Gemini CLI interactions:
 - **sas-endsession:** writes a brief note of what was done, where work stopped, and what to tackle next
 - **sas-reattach:** reads the latest note so the agent can resume immediately without the user re-explaining context
 
@@ -107,7 +107,7 @@ repo_path: D:/path/to/repo           # forward slashes regardless of OS
 | Commit | Description |
 |--------|-------------|
 | `9246cec` | Initial endsession and reattach skill implementation plan |
-| `bf48c81` | Initial commit — Qwen Code Skills repository |
+| `bf48c81` | Initial commit — Gemini CLI Skills repository |
 | `23803bf` | Remove user permission step from endsession workflow |
 | `f6f49b0` | Add git tracking rule to endsession and reattach |
 | `360f922` | Rename from aqs- to sas- prefix |
@@ -119,3 +119,4 @@ repo_path: D:/path/to/repo           # forward slashes regardless of OS
 ---
 
 *Implementation complete. Both skills operational and committed.*
+

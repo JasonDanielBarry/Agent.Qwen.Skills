@@ -46,3 +46,4 @@ A skill that structures, formats, and manages meeting notes, action items, and d
 - Should link to project management tools (Jira, Linear, GitHub Issues)
 - Must support both synchronous and async meeting notes
 - Should remind about overdue action items
+
