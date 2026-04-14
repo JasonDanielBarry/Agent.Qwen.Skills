@@ -1,14 +1,14 @@
-# Agents.Skills
+# Agent Skills
 
 ## Directory Overview
 
-This directory stores **Agent Skills** for Qwen Code — reusable, discoverable capabilities that extend the agent's effectiveness for specific tasks. Each Skill packages instructions, scripts, templates, and reference material into a self-contained folder.
+This directory stores **Agent Skills** for Gemini CLI — reusable, discoverable capabilities that extend the agent's effectiveness for specific tasks. Each Skill packages instructions, scripts, templates, and reference material into a self-contained folder.
 
 All Skills in this repository **must adhere to the [Semantic Constraint Framework](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md)** — a system of structured artifacts that constrain probabilistic AI behavior into reliably deterministic outcomes.
 
-Skills are invoked autonomously by the model when your prompt matches a Skill's `description`, or explicitly via `/skills <skill-name>`.
+Skills are invoked autonomously by the model when your prompt matches a Skill's `description`, or explicitly via `activate_skill`.
 
-**Location:** `D:\Users\jasonbarry\Documents\Development\Agent\Agent.Qwen.Skills`
+**Location:** `D:\Users\jasonbarry\Documents\Development\Agent\semantic-agent-skills`
 
 ## Purpose
 
@@ -25,12 +25,11 @@ This directory serves as an **Extension** source for Skills. It is a workspace f
 |---|---|
 | [Semantic Constraint Framework.md](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md) | **Governing framework** — techniques, artifact catalog, validation rules, enforcement procedures for all semantic artifacts |
 | [Agent Skills Guide.md](./Agent%20Skills%20Guide.md) | **Agent-agnostic** concepts: what Skills are, design principles, best practices, security, versioning |
-| [Qwen Code Implementation Notes.md](./Qwen%20Code%20Implementation%20Notes.md) | **Qwen Code-specific** details: discovery paths, `SKILL.md` format, commands, debugging, gotchas |
 
 ## Structure
 
 ```
-Agents.Skills/
+semantic-agent-skills/
 ├── <skill-name>/
 │   ├── SKILL.md           ← Required: frontmatter + instructions
 │   ├── reference.md       ← Optional: detailed documentation
@@ -40,9 +39,8 @@ Agents.Skills/
 ├── semantic-constraint-framework/
 │   └── Semantic Constraint Framework.md  ← Governing framework
 ├── README.md              ← Project overview
-├── QWEN.md                ← This file — agent context for this directory
-├── Agent Skills Guide.md  ← Agent-agnostic research guide
-└── Qwen Code Implementation Notes.md  ← Qwen Code-specific details
+├── GEMINI.md              ← This file — agent context for this directory
+└── Agent Skills Guide.md  ← Agent-agnostic research guide
 ```
 
 For the canonical folder structure of a single Skill, see [Folder Structure](./Agent%20Skills%20Guide.md#folder-structure) in the research guide.
@@ -50,11 +48,10 @@ For the canonical folder structure of a single Skill, see [Folder Structure](./A
 ## Getting Started
 
 1. Read the [Agent Skills Guide](./Agent%20Skills%20Guide.md) for universal concepts and best practices
-2. Read the [Qwen Code Implementation Notes](./Qwen%20Code%20Implementation%20Notes.md) for Qwen-specific details (paths, format, commands)
-3. Create a new folder for your Skill using lowercase letters and hyphens
-4. Write a `SKILL.md` with YAML frontmatter and clear, step-by-step instructions
-5. Add any supporting files (scripts, templates, reference docs)
-6. Restart Qwen Code and test that the Skill activates on relevant prompts
+2. Create a new folder for your Skill using lowercase letters and hyphens
+3. Write a `SKILL.md` with YAML frontmatter and clear, step-by-step instructions
+4. Add any supporting files (scripts, templates, reference docs)
+5. Test that the Skill activates on relevant prompts via `activate_skill`
 
 ## Available Skills
 
@@ -65,19 +62,16 @@ For the canonical folder structure of a single Skill, see [Folder Structure](./A
 | `sas-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — no permission prompts |
 | `sas-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, offers post-merge actions |
 | `sas-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification and conflict resolution |
-| `install-sas-skills` | Install or update all skills from this repo to the local machine — **repo-local only** (lives in `.qwen/skills/`, not installed to machine) |
+| `install-sas-skills` | Install or update all skills from this repo to the local machine — **repo-local only** (lives in `.gemini/skills/`, not installed to machine) |
 
 ## Management
 
 | Action | Command |
 |---|---|
-| List all Skills | `/skills` |
-| Invoke a Skill | `/skills <skill-name>` |
-| Edit a Skill | Modify its `SKILL.md`, then restart Qwen Code |
+| List all Skills | `activate_skill` (to see available skills) |
+| Invoke a Skill | `activate_skill(name="<skill-name>")` |
+| Edit a Skill | Modify its `SKILL.md` |
 | Remove a Skill | Delete its folder |
-| Debug loading | Run `qwen --debug` to see YAML or path errors |
-
-For detailed management and troubleshooting, see the [Qwen Code Implementation Notes](./Qwen%20Code%20Implementation%20Notes.md).
 
 ## Conventions
 
@@ -92,8 +86,8 @@ For detailed management and troubleshooting, see the [Qwen Code Implementation N
 ## Related Directories
 
 - `../` — Parent Agent development workspace
-- `~/.qwen/skills/` — Personal Skills (individual, cross-project)
-- `.qwen/skills/` — Project-level Skills (team-shared, git-committed)
+- `~/.gemini/skills/` — Personal Skills (individual, cross-project)
+- `.gemini/skills/` — Project-level Skills (team-shared, git-committed)
 
 ## Notes
 
@@ -104,4 +98,4 @@ For detailed management and troubleshooting, see the [Qwen Code Implementation N
 
 ---
 
-*Last updated: 10 April 2026*
+*Last updated: 14 April 2026*
