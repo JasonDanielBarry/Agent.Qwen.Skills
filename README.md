@@ -1,119 +1,89 @@
-# Agents.Skills
+# Agent Skills (SAS)
 
-A repository of custom Agent Skills for Qwen Code — all adhering to the **Semantic Constraint Framework**.
+A repository of custom Agent Skills for Gemini CLI — all adhering to the **Semantic Constraint Framework**.
 
 ## Overview
 
-This repository contains custom Skills — modular capabilities that extend Qwen Code's effectiveness for specific tasks. Each Skill packages instructions, scripts, templates, and reference material into a self-contained folder that the agent can discover and invoke autonomously.
+This repository contains custom Skills — modular capabilities that extend Gemini CLI's effectiveness for specific tasks. Each Skill packages instructions, scripts, templates, and reference material into a self-contained folder that the agent can discover and invoke autonomously.
 
-Every Skill in this repository **adheres to the [Semantic Constraint Framework](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md)** — a system of structured artifacts that constrain probabilistic AI behavior into reliably deterministic outcomes. Skills define explicit purpose, scope, inputs, outputs, constraints, invariants, failure modes, validation strategy, relationships, and guarantees.
+### Core Documentation
 
-## Documentation
+| Document | Purpose |
+|---|---|
+| [Semantic Constraint Framework.md](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md) | **Governing framework** — techniques, artifact catalog, validation rules, enforcement procedures |
+| [Agent Skills Guide.md](./Agent%20Skills%20Guide.md) | **Agent-agnostic** concepts — what Skills are, design principles, best practices, security, versioning |
+| [GEMINI.md](./GEMINI.md) | **Gemini CLI-specific** — agent context for this directory, discovery paths, SKILL.md format |
 
-| Document | Scope | Covers |
-|---|---|---|
-| [Semantic Constraint Framework.md](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md) | **Governing framework** | Techniques, artifact catalog (plans, skills, tools, memory, prompts, tests, etc.), validation rules, enforcement procedures, feedback loops |
-| [Agent Skills Guide.md](./Agent%20Skills%20Guide.md) | **Agent-agnostic** | What Skills are, design principles, best practices, security, token budget, versioning, lifecycle, testing methodology, distribution, agent design patterns |
-| [Qwen Code Implementation Notes.md](./Qwen%20Code%20Implementation%20Notes.md) | **Qwen Code-specific** | Discovery paths, `SKILL.md` format, complete example, invocation commands, token budget by model, extension Skills, git workflow, debugging, edge cases |
-
-Read the framework first, then the research guide, then the implementation notes.
-
-## Structure
+## Repository Structure
 
 ```
-Agents.Skills/
-├── <skill-name>/
-│   ├── SKILL.md           ← Required: frontmatter + instructions
-│   ├── reference.md       ← Optional: detailed documentation
-│   ├── examples.md        ← Optional: usage examples
-│   ├── scripts/           ← Optional: helper scripts
-│   └── templates/         ← Optional: starter templates
+semantic-agent-skills/
+├── skills/
+│   ├── sas-endsession/     ← Skill for session handoff
+│   ├── sas-reattach/       ← Skill for resuming session
+│   ├── ...                 ← Other custom Skills
 ├── semantic-constraint-framework/
 │   └── Semantic Constraint Framework.md  ← Governing framework
-├── README.md              ← This file
-├── QWEN.md                ← Agent context for this directory
-├── Agent Skills Guide.md  ← Agent-agnostic research guide
-└── Qwen Code Implementation Notes.md  ← Qwen Code-specific details
+├── GEMINI.md               ← Agent context for this directory
+├── Agent Skills Guide.md   ← Agent-agnostic research guide
+└── README.md               ← This file
 ```
-
-## Naming Convention
-
-To avoid naming conflicts with Skills from other sources (personal, project-level, or third-party), all Skills in this repository must use the `sas-` prefix:
-
-```
-sas-<skill-name>
-```
-
-Examples: `sas-pdf-tool`, `sas-code-review`, `sas-data-migration`
-
-This ensures clear scoping and prevents collisions when multiple Skill sources are active simultaneously.
 
 ## Getting Started
 
-1. Read the [Semantic Constraint Framework](./semantic-constraint-framework/Semantic%20Constraint%20Framework.md) for the governing principles and artifact design rules
-2. Read the [Agent Skills Guide](./Agent%20Skills%20Guide.md) for universal concepts and best practices
-3. Read the [Qwen Code Implementation Notes](./Qwen%20Code%20Implementation%20Notes.md) for Qwen-specific details (paths, format, commands, model token budgets)
-4. Create a new folder using the `sas-` prefix and kebab-case naming (e.g., `sas-pdf-tool`)
-5. Write a `SKILL.md` with YAML frontmatter and clear, step-by-step instructions — following the Semantic Constraint Framework's universal required sections
-6. Restart Qwen Code and test that the Skill activates on relevant prompts
-
-For a quick validation checklist, see the [Quick-Start Checklist](./Agent%20Skills%20Guide.md#quick-start-checklist) and [Testing Methodology](./Agent%20Skills%20Guide.md#testing-methodology) in the research guide.
+1. Read the [Agent Skills Guide](./Agent%20Skills%20Guide.md) for universal concepts and best practices
+2. Read the [GEMINI.md](./GEMINI.md) for Gemini-specific details (paths, format, commands)
+3. Create a new folder in `skills/` for your Skill using lowercase letters and hyphens
+4. Write a `SKILL.md` with YAML frontmatter and clear, step-by-step instructions
+5. Add any supporting files (scripts, templates, reference docs)
+6. Install the skills and test that the Skill activates on relevant prompts via `activate_skill`
 
 ## Installation
 
-Skills in this repo are **Personal Skills** — installed to `~/.qwen/skills/` for cross-project use.
+Skills in this repo are **Personal Skills** — installed to `~/.gemini/skills/` for cross-project use.
 
-### Install / Reinstall All Skills
+### Automated Installation (Recommended)
 
-Run the install script from the repo root:
+Run the included PowerShell script from the repository root:
 
-**Windows (CMD):**
-```cmd
-install-skills.bat
-```
-
-**Windows (PowerShell):**
 ```powershell
 .\install-sas-skills.ps1
 ```
 
-The script will:
-1. Create `~/.qwen/skills/` if it doesn't exist
-2. Copy all skills from `skills/` to `~/.qwen/skills/`
-3. Replace any existing versions with the latest from this repo
+### Manual Installation
 
-> **Remember:** Restart Qwen Code after installing for changes to take effect.
+1. Create `~/.gemini/skills/` if it doesn't exist
+2. Copy all skills from `skills/` to `~/.gemini/skills/`
 
-### Manual Install
+**Windows (PowerShell):**
+```powershell
+New-Item -ItemType Directory -Path "$env:USERPROFILE\.gemini\skills" -Force
+Copy-Item -Path "skills\*" -Destination "$env:USERPROFILE\.gemini\skills" -Recurse -Force
+```
 
-Copy a skill folder manually:
+**Windows (CMD):**
 ```cmd
-xcopy /E /I /Y skills\sas-endsession "%USERPROFILE%\.qwen\skills\sas-endsession"
+mkdir "%USERPROFILE%\.gemini\skills"
+xcopy /E /I /Y skills "%USERPROFILE%\.gemini\skills"
 ```
 
 ## Available Skills
 
 | Skill | Description |
 |---|---|
-| `sas-endsession` | Save a session handoff note when wrapping up — captures what was done, where work left off, and what to tackle next, so the next session resumes instantly |
-| `sas-reattach` | Read the latest session handoff note and restore context — surfaces accomplishments, stopping point, and next tasks; auto-creates a todo list |
-| `sas-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — handles upstream setup, merge conflict warnings, and edge cases without asking permission |
-| `sas-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, and offers post-merge actions |
-| `sas-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification-first retrieval, conflict resolution, and lifecycle management |
-| `install-sas-skills` | Install or update all skills from this repo to the local machine via `install-sas-skills.ps1` — **repo-local only** (lives in `.qwen/skills/`, not installed to machine) |
+| `sas-endsession` | Save a session handoff note when wrapping up — captures what was done, where work left off, and what to tackle next |
+| `sas-reattach` | Read the latest session handoff note and restore context — auto-creates todo list from next steps |
+| `sas-git-commit-and-push` | Autonomously stage, commit, and push with conventional commit messages — no permission prompts |
+| `sas-git-merge` | Merge branches interactively with guided conflict resolution — verifies repo state, presents target branches, offers post-merge actions |
+| `sas-self-healing-memory` | Maintain a structured, self-correcting memory system — persistent knowledge across sessions with verification and conflict resolution |
+| `install-sas-skills` | Install or update all skills from this repo to the local machine via `install-sas-skills.ps1` — **repo-local only** |
 
 ## Management
 
 | Action | Command |
 |---|---|
-| List all Skills | `/skills` |
-| Invoke a Skill | `/skills <skill-name>` |
-| Edit a Skill | Modify its `SKILL.md`, then restart Qwen Code |
-| Remove a Skill | Delete its folder |
-| Debug loading | Run `qwen --debug` to see YAML or path errors |
+| List all Skills | `activate_skill` (to see available skills) |
+| Invoke a Skill | `activate_skill(name="<skill-name>")` |
+| Edit a Skill | Modify its `SKILL.md` |
 
-For detailed troubleshooting and known edge cases, see [Debugging](./Qwen%20Code%20Implementation%20Notes.md#debugging) and [Known Issues & Edge Cases](./Qwen%20Code%20Implementation%20Notes.md#known-issues--edge-cases) in the Qwen Code notes.
-
----
-
-*Last updated: 10 April 2026*
+For detailed troubleshooting and known edge cases, see the [GEMINI.md](./GEMINI.md) file.

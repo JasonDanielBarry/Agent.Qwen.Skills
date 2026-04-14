@@ -1,5 +1,3 @@
-<!-- compiled from: skills/sas-semantic-compiler-verify/SKILL.human.md | 2026-04-14T09:30:00Z -->
-
 ---
 name: sas-semantic-compiler-verify
 description: Perform an expensive, on-demand quality audit of a compiled skill. Runs deep analysis: full content coverage audit, constraint sufficiency check, conflict detection, edge case coverage, instruction fidelity, and semantic drift. Not part of the normal compilation pipeline — invoked manually for quality audits.
@@ -219,3 +217,4 @@ Compare the compiled skill against the source for subtle meaning changes:
 **WARNING if:** non-P0 constraint scope changed slightly, or instructions reworded in ways that could affect edge cases.
 
 </phase_separation>
+

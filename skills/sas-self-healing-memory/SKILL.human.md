@@ -316,3 +316,4 @@ This skill is **complementary** to `sas-endsession` and `sas-reattach`:
 | Supersede (don't delete) outdated entries | Let duplicates accumulate |
 | Use tags for Index entries | Create overly long Index entries (>150 chars) |
 | Log conflicts in transcripts | Ignore conflicts between memory and code |
+

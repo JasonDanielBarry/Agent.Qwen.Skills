@@ -202,3 +202,4 @@ Compare the compiled skill against the source for subtle meaning changes:
 
 **FAIL if:** any P0 constraint scope changed, or any P0 forbidden usage rule relaxed.
 **WARNING if:** non-P0 constraint scope changed slightly, or instructions reworded in ways that could affect edge cases.
+

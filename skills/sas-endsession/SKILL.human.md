@@ -5,7 +5,7 @@ description: Save a lightweight session handoff note so the next session can pic
 
 # sas-endsession
 
-This skill enables seamless continuity between Qwen Code sessions by capturing a concise, structured summary of what was accomplished, where work concluded, and what should be tackled next. It eliminates context loss when sessions end, so the next session (or another agent) can resume immediately without re-reading conversation history or re-discovering the state of the codebase.
+This skill enables seamless continuity between Gemini CLI sessions by capturing a concise, structured summary of what was accomplished, where work concluded, and what should be tackled next. It eliminates context loss when sessions end, so the next session (or another agent) can resume immediately without re-reading conversation history or re-discovering the state of the codebase.
 
 **Note:** This skill writes the session report directly without asking for user confirmation beforehand. The agent drafts the summary from conversation context and saves it immediately. After writing, the agent shows the user the file path and a brief preview, and can apply adjustments if requested.
 
@@ -48,3 +48,4 @@ This skill enables seamless continuity between Qwen Code sessions by capturing a
 3. **Confirm the save:**
    - Show the user the file path and a brief preview of what was saved.
    - Ask if adjustments are needed. If the user requests changes, update the file accordingly.
+

@@ -103,7 +103,7 @@ my-skill/
     └── template.txt
 ```
 
-> **Note:** The main definition file is conventionally called `SKILL.md` in Qwen Code. Other agents may use `SKILL.yaml`, `config.json`, or similar. The pattern — a single required definition file plus optional supporting assets — is consistent across agents.
+> **Note:** The main definition file is conventionally called `SKILL.md` in Gemini CLI. Other agents may use `SKILL.yaml`, `config.json`, or similar. The pattern — a single required definition file plus optional supporting assets — is consistent across agents.
 
 ### File Conventions
 
@@ -169,7 +169,7 @@ Concrete usage examples showing the Skill in action.
 Edge cases, limitations, or additional context.
 ```
 
-> **Note:** The exact metadata format and validation rules vary by agent. See your agent's implementation guide for details. For Qwen Code, see [Qwen Code Implementation Notes](./Qwen%20Code%20Implementation%20Notes.md#skillmd-format).
+> **Note:** The exact metadata format and validation rules vary by agent. See your agent's implementation guide for details. For Gemini CLI, see [GEMINI.md](./GEMINI.md#skillmd-format).
 
 ---
 
@@ -713,7 +713,7 @@ In your `SKILL.md`, include an **Error Handling** section that tells the agent w
 
 ## Resources
 
-- [**Qwen Code Docs — Agent Skills**](https://qwenlm.github.io/qwen-code-docs/en/users/features/skills/) — Official Qwen Code Skills documentation
+- [**Gemini CLI Docs — Agent Skills**](https://geminicli.com/docs/cli/skills) — Official Gemini CLI Skills documentation
 - [**Agentic AI: Five Design Patterns**](https://levelup.gitconnected.com/agentic-ai-the-five-design-patterns-that-turn-llms-into-ai-agents-7c95dec92d1b) — Tool use, planning, reflection, orchestration, and multi-agent patterns
 - [**AI Agent Orchestration Patterns — Azure**](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns) — Sequential, concurrent, group chat, and handoff patterns
 - [**Design Patterns for Agentic AI**](https://appstekcorp.com/blog/design-patterns-for-agentic-ai-and-multi-agent-systems/) — Reactive loops, hierarchical supervision, and graph-based memory
@@ -724,3 +724,4 @@ In your `SKILL.md`, include an **Error Handling** section that tells the agent w
 ---
 
 *Last updated: 9 April 2026*
+

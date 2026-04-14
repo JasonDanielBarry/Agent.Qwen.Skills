@@ -4,7 +4,7 @@
 $ErrorActionPreference = "Stop"
 
 $SkillsSource = Join-Path $PSScriptRoot "skills"
-$SkillsDest = Join-Path $env:USERPROFILE ".qwen\skills"
+$SkillsDest = Join-Path $env:USERPROFILE ".gemini\skills"
 
 # Validate source exists
 if (-not (Test-Path $SkillsSource)) {
@@ -51,4 +51,4 @@ Get-ChildItem -Path $SkillsSource -Directory | ForEach-Object {
 Write-Host ""
 Write-Host "Done! Installed $installed skill(s)." -ForegroundColor Green
 Write-Host ""
-Write-Host "Remember to restart Qwen Code for changes to take effect." -ForegroundColor Yellow
+Write-Host "Gemini CLI is now ready with the updated skills." -ForegroundColor Yellow

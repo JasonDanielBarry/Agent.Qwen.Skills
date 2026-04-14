@@ -5,7 +5,7 @@ description: Read the latest session handoff note and pick up where the previous
 
 # sas-reattach
 
-This skill restores working context instantly when resuming a Qwen Code session by reading the most recent handoff note created by `sas-endsession`. It surfaces what was accomplished, where work stopped, and what comes next — so the agent can pick up immediately without requiring the user to re-explain the situation or re-trace prior steps.
+This skill restores working context instantly when resuming a Gemini CLI session by reading the most recent handoff note created by `sas-endsession`. It surfaces what was accomplished, where work stopped, and what comes next — so the agent can pick up immediately without requiring the user to re-explain the situation or re-trace prior steps.
 
 **Note:** This skill must be invoked from a **repository root** (a directory containing `.git`). It will not work from subdirectories.
 
@@ -75,3 +75,4 @@ This skill restores working context instantly when resuming a Qwen Code session 
 
 12. **Confirm readiness:**
     - Briefly state that context is loaded and you're ready to continue.
+

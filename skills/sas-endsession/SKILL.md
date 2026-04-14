@@ -1,5 +1,3 @@
-<!-- compiled from: skills/sas-endsession/SKILL.human.md | 2026-04-14T10:00:00Z -->
-
 ---
 name: sas-endsession
 description: Save a lightweight session handoff note so the next session can pick up where this one left off. Use when ending work, wrapping up, saving progress, logging work, or creating a handoff.
@@ -49,3 +47,4 @@ description: Save a lightweight session handoff note so the next session can pic
 <invariants>
 [P0] UTC timestamp in filename. YAML frontmatter with session_date + repo_path. Exactly 3 required sections.
 </invariants>
+

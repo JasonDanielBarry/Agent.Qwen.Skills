@@ -1,12 +1,10 @@
-<!-- compiled from: skills/sas-reattach/SKILL.human.md | 2026-04-14T10:00:00Z -->
-
 ---
 name: sas-reattach
 description: Read the latest session handoff note and pick up where the previous session left off. Use when resuming work, continuing a session, restoring context, or asking what you were working on.
 ---
 
 <purpose>
-[P0] Restores working context when resuming a Qwen Code session by reading the most recent handoff note from sas-endsession. Must be invoked from repository root (directory containing .git).
+[P0] Restores working context when resuming a Gemini CLI session by reading the most recent handoff note from sas-endsession. Must be invoked from repository root (directory containing .git).
 </purpose>
 
 <scope>Target: .sessions/session-*.md files. Excluded: session notes from other repos, non-session files, files without valid YAML frontmatter.</scope>
@@ -43,3 +41,4 @@ description: Read the latest session handoff note and pick up where the previous
     IF section empty/non-actionable (placeholders like "Nothing to pick up", "TBD") → skip, ask user what to work on.
 12. Confirm readiness: "Context loaded, ready to continue."
 </phase_separation>
+

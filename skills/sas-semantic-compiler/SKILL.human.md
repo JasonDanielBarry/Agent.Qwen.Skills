@@ -92,27 +92,31 @@ Source (.human.md)
 
 ## Sub-Agent Execution Model
 
-**Invariant — Fresh sub-agent per stage/pass:** Each of the 6 pipeline stages and each of the 3 Stage 4 optimization passes MUST execute in a separate sub-agent. Reusing a single agent across multiple stages or passes is forbidden. Sub-agent termination (process exit) is the only mechanism that provides structural context isolation.
+### 8 SUB-AGENT INVOCATIONS — 6 PIPELINE STAGES + 3 OPTIMIZATION PASSES
 
-### Execution Sequence (8 sub-agent invocations + validation)
+**P0 INVARIANT:** This compilation pipeline MUST execute as **8 separate sub-agent invocations**. A single agent processing all stages in sequence is **forbidden**. Each sub-agent processes one stage, writes output to disk, and terminates. Context isolation via process exit is the only guarantee against cross-stage contamination.
 
-| Execution Unit | Agent | Input | Output |
-|----------------|-------|-------|--------|
-| Stage 1 — Preprocessor | Agent 1 | Source `.human.md` file | `preprocessed.md` + `annotations.json` |
-| Stage 2 — Structural Parse | Agent 2 | Stage 1 output files | `dst.json` |
-| Stage 3 — Semantic IR Extraction | Agent 3 | Stage 2 output file | `ir.json` |
-| Stage 4 Pass 1 — Strip & Compress | Agent 4 | Stage 3 output file | `ir-pass-1.json` |
-| Stage 4 Pass 2 — Tag & Structure | Agent 5 | Pass 1 output file | `ir-pass-2.json` |
-| Stage 4 Pass 3 — Cross-Reference & Group | Agent 6 | Pass 2 output file | `ir-pass-3.json` |
-| Stage 5 — Semantic Constraint Injection | Agent 7 | Pass 3 output file | `ir-augmented.json` |
-| Stage 6 — Code Generation | Agent 8 | Stage 5 output file | `output-draft.md` |
+**Execution Sequence (parent agent orchestrator — follow these steps in order):**
+
+1. **Spawn Agent 1 (Preprocessor):** Load this SKILL.md + source file (`.human.md`). Write `preprocessed.md` + `annotations.json` to `.DocName.compilation/stage-1/`. Terminate.
+2. **Spawn Agent 2 (Structural Parse):** Load this SKILL.md + `preprocessed.md` + `annotations.json`. Write `dst.json` to `.DocName.compilation/stage-2/`. Terminate.
+3. **Spawn Agent 3 (Semantic IR Extraction):** Load this SKILL.md + `dst.json`. Write `ir.json` to `.DocName.compilation/stage-3/`. Terminate.
+4. **Spawn Agent 4 (Pass 1 — Strip & Compress):** Load this SKILL.md + `ir.json`. Write `ir-pass-1.json` to `.DocName.compilation/stage-4/`. Terminate.
+5. **Spawn Agent 5 (Pass 2 — Tag & Structure):** Load this SKILL.md + `ir-pass-1.json`. Write `ir-pass-2.json` to `.DocName.compilation/stage-4/`. Terminate.
+6. **Spawn Agent 6 (Pass 3 — Cross-Reference & Group):** Load this SKILL.md + `ir-pass-2.json`. Write `ir-pass-3.json` to `.DocName.compilation/stage-4/`. Terminate.
+7. **Spawn Agent 7 (Semantic Constraint Injection):** Load this SKILL.md + `ir-pass-3.json`. Write `ir-augmented.json` to `.DocName.compilation/stage-5/`. Terminate.
+8. **Spawn Agent 8 (Code Generation):** Load this SKILL.md + `ir-augmented.json`. Write `SKILL.md` (compiled output) to source directory. Terminate.
+
+**After all 8 stages:** Run Tier 1 structural validation on the compiled output. If validation fails, report errors and halt.
+
+**Forbidden:** Reusing a single agent across multiple stages. Skipping any stage. Running stages out of order. Reading from multiple stage outputs simultaneously.
 
 ### Sub-Agent Lifecycle
 
 Every sub-agent follows: **Spawn → Load → Process → Write → Terminate**
 
 1. **Spawn** — parent agent creates a fresh sub-agent
-2. **Load** — sub-agent receives: (a) the compilation skill instructions (SKILL.md), and (b) the output files from the previous stage/pass on disk. Nothing else.
+2. **Load** — sub-agent receives: (a) this SKILL.md (compilation instructions), and (b) the output files from the previous stage/pass on disk. Nothing else.
 3. **Process** — sub-agent performs its stage's transformation per the pipeline specification
 4. **Write** — sub-agent writes its output files to the `.DocName.compilation/` folder
 5. **Terminate** — sub-agent exits. Process destruction = guaranteed context destruction.
@@ -577,7 +581,9 @@ Same meaning, different surface. The compiler controls the dial.
 ### Traceability Header
 
 - Format: `<!-- compiled from: {relative_source_path} | {ISO 8601 timestamp} -->`
-- Placed as first line of compiled file
+- Placement:
+  - **Skills (SKILL.md):** MUST be placed immediately AFTER the closing `---` of the YAML frontmatter. The YAML frontmatter MUST start on line 1.
+  - **Other documents:** Placed as the first line of the compiled file.
 - Example: `<!-- compiled from: skills/sas-example/SKILL.human.md | 2026-04-13T14:30:00Z -->`
 
 ### Size and Token Limits
@@ -735,3 +741,4 @@ Compilation folders are typically 2–5× the size of the source document. For a
 ---
 
 *Last updated: 13 April 2026*
+
